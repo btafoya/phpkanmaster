@@ -1,0 +1,28 @@
+:80 {
+    # PostgREST API — strip /api prefix before forwarding
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy postgrest:3000
+    }
+
+    # Laravel app — all other requests
+    handle {
+        root * /var/www/html/public
+
+        # Try files, fall back to index.php
+        try_files {path} {path}/ /index.php
+
+        php_fastcgi app:9000 {
+            resolve_root_symlink
+            env PATH /usr/local/bin:/usr/bin:/bin
+        }
+
+        file_server
+    }
+
+    # Logging
+    log {
+        output stdout
+        format json
+    }
+}
