@@ -12,7 +12,7 @@ window.App = {
                 ...options,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Prefer': 'return=representation', // Get the object back on POST/PATCH
+                    'Prefer': 'return=representation',
                     ...options.headers,
                 },
             });
@@ -90,6 +90,27 @@ window.App = {
     Modal: {},
     DnD: {},
     Alerts: {}
+};
+
+App.Alerts = {
+    Toast: Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        theme: 'dark',
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        }
+    }),
+    Confirm: Swal.mixin({
+        theme: 'dark',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#252d3d'
+    })
 };
 
 console.log('phpKanMaster initialized');
