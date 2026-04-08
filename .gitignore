@@ -1,0 +1,31 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Worktrees (git worktree directories)
+.worktrees/
+worktrees/
+
+# Docker volumes
+caddy_data/
+caddy_config/
+pgdata/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+storage/logs/
+
+# Vendor (if not committing Laravel yet)
+vendor/
+node_modules/
