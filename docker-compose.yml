@@ -1,0 +1,82 @@
+services:
+  app:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: phpkanmaster_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    depends_on:
+      db:
+        condition: service_healthy
+      postgrest:
+        condition: service_started
+    networks:
+      - phpkanmaster
+
+  db:
+    image: postgres:17
+    container_name: phpkanmaster_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kanban
+      POSTGRES_USER: kanban
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-kanban_secret}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kanban -d kanban"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - phpkanmaster
+
+  postgrest:
+    image: postgrest/postgrest:latest
+    container_name: phpkanmaster_postgrest
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://kanban_postgrest:${POSTGREST_PASSWORD:-postgrest_secret}@db:5432/kanban
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_DB_EXTRA_SEARCH_PATH: public
+      PGRST_SERVER_PORT: 3000
+      PGRST_SERVER_HOST: 0.0.0.0
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - phpkanmaster
+    # No ports exposed — accessed only via Caddy
+
+  caddy:
+    image: caddy:latest
+    container_name: phpkanmaster_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+      - postgrest
+    networks:
+      - phpkanmaster
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  phpkanmaster:
+    driver: bridge
