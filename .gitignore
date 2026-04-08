@@ -1,31 +1,24 @@
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# Worktrees (git worktree directories)
-.worktrees/
-worktrees/
-
-# Docker volumes
-caddy_data/
-caddy_config/
-pgdata/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
 *.log
-storage/logs/
-
-# Vendor (if not committing Laravel yet)
-vendor/
-node_modules/
+.DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+Homestead.json
+Homestead.yaml
+Thumbs.db

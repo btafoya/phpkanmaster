@@ -1,0 +1,37 @@
+/* phpKanMaster - Board Styles */
+#board {
+    min-height: calc(100vh - 120px);
+}
+
+.column {
+    min-width: 300px;
+    max-width: 300px;
+    background: #2b3035;
+    border-radius: 8px;
+    padding: 12px;
+    margin-right: 16px;
+}
+
+.card-task {
+    background: #3a414a;
+    border: none;
+    border-left: 4px solid #6c757d;
+    margin-bottom: 12px;
+    cursor: grab;
+}
+
+.card-task:active {
+    cursor: grabbing;
+}
+
+.card-task.priority-high {
+    border-left-color: #dc3545;
+}
+
+.card-task.priority-medium {
+    border-left-color: #ffc107;
+}
+
+.card-task.priority-low {
+    border-left-color: #28a745;
+}
