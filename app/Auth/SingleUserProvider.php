@@ -47,7 +47,7 @@ class SingleUserProvider implements UserProvider
         // No-op for single-user
     }
 
-    public function updateRememberToken(Authenticatable $user, ?string $token): void
+    public function updateRememberToken(Authenticatable $user, $token): void
     {
         // No-op for single-user
     }
