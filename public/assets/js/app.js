@@ -242,6 +242,19 @@ App.Modal = {
             $select.append('<option value="">None</option>');
             categories.forEach(c => $select.append(`<option value="${c.id}">${c.name}</option>`));
 
+            // Reset recurrence section
+            App.Recurrence._currentRuleId = null;
+            $('#repeatTask').prop('checked', false);
+            $('#recurrenceFields').hide();
+            $('#recurrencePattern').val('weekly');
+            $('#recurrenceInterval').val(1);
+            $('#intervalLabel').text('week(s)');
+            $('#weekdaySelector').show();
+            $('.weekday-btn').removeClass('active btn-secondary').addClass('btn-outline-secondary');
+            $('#endNever').prop('checked', true);
+            $('#recurrenceEndDate').hide().val('');
+            $('#recurrencePreview').hide().text('');
+
             if (taskId) {
                 const task = await App.Api.request(`/tasks?id=eq.${taskId}&select=*`);
                 const data = task[0];
@@ -256,6 +269,13 @@ App.Modal = {
                 $(form).find('[name="task_column"]').val(data.task_column);
                 $(form).find('[name="reminder_at"]').val(data.reminder_at);
                 $(form).find('[name="pushover_priority"]').val(data.pushover_priority);
+
+                // Load recurrence rule if present
+                const rule = await App.Api.getRecurrenceRuleForTask(taskId);
+                if (rule && rule.active) {
+                    App.Recurrence._currentRuleId = rule.id;
+                    App.Recurrence._loadRule(rule);
+                }
             } else {
                 $('#taskModalTitle').text('Add Task');
                 $(form).find('[name="id"]').val('');
@@ -277,11 +297,46 @@ App.Modal = {
             if (!data.reminder_at) delete data.reminder_at;
 
             try {
+                let savedTaskId = data.id;
+
                 if (data.id) {
                     await App.Api.updateTask(data.id, data);
                 } else {
-                    await App.Api.createTask(data);
+                    const created = await App.Api.createTask(data);
+                    savedTaskId = created[0]?.id;
                 }
+
+                // Handle recurrence rule
+                const repeatEnabled = $('#repeatTask').is(':checked');
+                const existingRuleId = App.Recurrence._currentRuleId;
+
+                if (repeatEnabled && savedTaskId) {
+                    const rruleJson = App.Recurrence.buildRRule({
+                        ...App.Recurrence._getFormData(),
+                        reminder_at: data.reminder_at,
+                    });
+
+                    if (existingRuleId) {
+                        await App.Api.updateRecurrenceRule(existingRuleId, {
+                            rrule:  rruleJson,
+                            active: true,
+                        });
+                    } else {
+                        const dtstart = data.reminder_at
+                            ? new Date(data.reminder_at).toISOString()
+                            : new Date().toISOString();
+
+                        await App.Api.createRecurrenceRule({
+                            task_id:            savedTaskId,
+                            rrule:              rruleJson,
+                            next_occurrence_at: dtstart,
+                            active:             true,
+                        });
+                    }
+                } else if (!repeatEnabled && existingRuleId) {
+                    await App.Api.deleteRecurrenceRule(existingRuleId);
+                }
+
                 App.Alerts.Toast.fire({ icon: 'success', title: 'Task saved' });
                 bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
                 await App.Board.render();

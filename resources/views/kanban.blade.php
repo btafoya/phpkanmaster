@@ -182,6 +182,57 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="mb-3 p-3 bg-dark border border-secondary rounded">
+                            <div class="d-flex align-items-center mb-2">
+                                <input class="form-check-input me-2" type="checkbox" id="repeatTask">
+                                <label class="form-check-label fw-semibold" for="repeatTask">&#x1F501; Repeat this task</label>
+                            </div>
+                            <div id="recurrenceFields" style="display:none">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="small">Repeat</label>
+                                        <select id="recurrencePattern" class="form-select form-select-sm bg-dark text-light border-secondary">
+                                            <option value="daily">Daily</option>
+                                            <option value="every_other_day">Every other day</option>
+                                            <option value="weekly" selected>Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                            <option value="yearly">Yearly</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="small">Every <span id="intervalLabel">week(s)</span></label>
+                                        <input type="number" id="recurrenceInterval" class="form-control form-control-sm bg-dark text-light border-secondary" value="1" min="1" max="99">
+                                    </div>
+                                </div>
+                                <div id="weekdaySelector" class="mb-2">
+                                    <label class="small d-block mb-1">On these days:</label>
+                                    <div class="d-flex gap-1">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="MO">M</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="TU">T</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="WE">W</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="TH">T</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="FR">F</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="SA">S</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="SU">S</button>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="small d-block mb-1">End</label>
+                                    <div class="d-flex gap-3 align-items-center flex-wrap">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="recurrenceEnd" id="endNever" value="never" checked>
+                                            <label class="form-check-label small" for="endNever">Never</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="recurrenceEnd" id="endOnDate" value="on_date">
+                                            <label class="form-check-label small" for="endOnDate">On date</label>
+                                        </div>
+                                        <input type="text" id="recurrenceEndDate" class="form-control form-control-sm bg-dark text-light border-secondary datepicker" style="display:none; width:auto">
+                                    </div>
+                                </div>
+                                <div id="recurrencePreview" class="small text-info p-2 border border-secondary rounded" style="display:none"></div>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer border-secondary">
