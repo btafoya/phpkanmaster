@@ -21,7 +21,7 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css" rel="stylesheet">
 
     {{-- Custom CSS --}}
-    <link href="/assets/css/app.css" rel="stylesheet">
+    <link href="/assets/css/app.css?v={{ filemtime(public_path('assets/css/app.css')) }}" rel="stylesheet">
 
     <style>
         .kanban-column {
@@ -57,31 +57,25 @@
     </style>
 </head>
 <body>
-    {{-- Navbar --}}
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">phpKanMaster</span>
-            <div class="d-flex">
-                <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+    {{-- Top Bar --}}
+    <nav class="navbar navbar-dark bg-dark px-3" style="min-height:0">
+        <div class="container-fluid gap-2 flex-nowrap py-1">
+            <span class="navbar-brand mb-0 h6 me-3 flex-shrink-0">phpKanMaster</span>
+            <div id="category-filters" class="d-flex align-items-center gap-1 flex-grow-1 overflow-x-auto">
+                <button class="btn btn-sm btn-outline-light active flex-shrink-0" data-filter="all">All</button>
+                <!-- Category pills injected here -->
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-2">
+                <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
+                <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
+                <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
             </div>
         </div>
     </nav>
 
-    {{-- Category Filters --}}
-    <div class="d-flex justify-content-center gap-2 mb-3" id="category-filters">
-        <button class="btn btn-sm btn-outline-light active" data-filter="all">All</button>
-        <!-- Category pills injected here -->
-    </div>
-
-    {{-- Action Buttons --}}
-    <div class="d-flex justify-content-end gap-2 mb-3 px-3">
-        <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
-        <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
-    </div>
-
     {{-- Main Board --}}
-    <main class="container-fluid mt-3">
-        <div id="kanban-board" class="d-flex gap-3 overflow-x-auto py-4">
+    <main class="container-fluid mt-2">
+        <div id="kanban-board" class="d-flex gap-3 overflow-x-auto py-2">
             <div class="kanban-column" data-column="new">
                 <div class="column-header d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0">New</h5>
@@ -150,7 +144,9 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Category</label>
-                                <select name="category_id" id="categorySelect" class="form-select bg-dark text-light border-secondary"></select>
+                                <select name="category_id" id="categorySelect" class="form-select bg-dark text-light border-secondary" required>
+                                    <option value="" disabled selected>— select category —</option>
+                                </select>
                             </div>
                         </div>
                         <div class="row">
@@ -294,6 +290,6 @@
     <script>
         window.POSTGREST_URL = '{{ env('PGRST_BASE_URL', '/api') }}';
     </script>
-    <script src="/assets/js/app.js"></script>
+    <script src="/assets/js/app.js?v={{ filemtime(public_path('assets/js/app.js')) }}"></script>
 </body>
 </html>

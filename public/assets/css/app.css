@@ -69,6 +69,44 @@
     color: #6c757d !important;
 }
 
+/* Summernote Dropdowns */
+.note-editor.note-frame .note-dropdown-menu,
+.note-editor.note-frame .dropdown-menu {
+    background-color: #343a40 !important;
+    border-color: #495057 !important;
+}
+
+.note-editor.note-frame .note-dropdown-menu .note-dropdown-item,
+.note-editor.note-frame .dropdown-menu .dropdown-item {
+    color: #dee2e6 !important;
+}
+
+.note-editor.note-frame .note-dropdown-menu .note-dropdown-item:hover,
+.note-editor.note-frame .dropdown-menu .dropdown-item:hover {
+    background-color: #495057 !important;
+}
+
+.note-editor.note-frame .note-color .dropdown-menu {
+    background-color: #343a40 !important;
+    border-color: #495057 !important;
+}
+
+.note-editor.note-frame .note-color .dropdown-menu .note-palette-title {
+    color: #dee2e6 !important;
+}
+
+.note-editor.note-frame .note-color .dropdown-menu .note-color-row {
+    background-color: #343a40 !important;
+}
+
+.note-editor.note-frame .note-color .dropdown-menu .note-color-btn {
+    border-color: #495057 !important;
+}
+
+.note-editor.note-frame .note-color .dropdown-menu .note-color-btn:hover {
+    transform: scale(1.2);
+}
+
 /* Flatpickr Dark Theme */
 .flatpickr-calendar {
     background: #212529 !important;
@@ -106,4 +144,55 @@
 
 .flatpickr-calendar .flatpickr-time .flatpickr-am-pm {
     color: #dee2e6 !important;
+}
+
+/* Flatpickr Time Input Fields */
+.flatpickr-calendar .flatpickr-time input {
+    background: #343a40 !important;
+    color: #dee2e6 !important;
+    border-color: #495057 !important;
+}
+
+.flatpickr-calendar .flatpickr-time input:hover,
+.flatpickr-calendar .flatpickr-time input:focus {
+    background: #495057 !important;
+}
+
+.flatpickr-calendar .flatpickr-time .numInputWrapper {
+    background: #343a40 !important;
+}
+
+.flatpickr-calendar .flatpickr-time .numInputWrapper:hover {
+    background: #495057 !important;
+}
+
+.flatpickr-calendar .flatpickr-time .numInputWrapper span {
+    color: #dee2e6 !important;
+}
+
+.flatpickr-calendar .flatpickr-time .numInputWrapper span:hover {
+    color: #fff !important;
+}
+
+/* Flatpickr Close Button */
+.flatpickr-close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: #343a40;
+    color: #dee2e6;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 4px;
+    z-index: 10;
+    transition: background 0.2s, color 0.2s;
+}
+
+.flatpickr-close-btn:hover {
+    background: #495057;
+    color: #fff;
 }

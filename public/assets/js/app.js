@@ -167,18 +167,15 @@ App.Board = {
     },
 
     createTaskCard(task, category) {
-        const priorityClass = {
-            'high': 'border-danger',
-            'medium': 'border-warning',
-            'low': 'border-info'
-        }[task.priority] || 'border-secondary';
+        const priorityClass = `priority-${task.priority || 'low'}`;
 
         const categoryBadge = category
             ? `<span class="badge" style="background-color: ${category.color}">${category.name}</span>`
             : '';
 
-        const dueDate = task.due_date ? `<div class="small text-muted"><i class="far fa-calendar-alt"></i> ${task.due_date}</div>` : '';
+        const borderStyle = category ? `style="border-left-color: ${category.color}"` : '';
 
+        const dueDate = task.due_date ? `<div class="small text-muted"><i class="far fa-calendar-alt"></i> ${task.due_date}</div>` : '';
         const hasActiveRule = task.recurrence_rules?.some(r => r.active);
         const recurrenceBadge = hasActiveRule ? `<span class="badge bg-secondary ms-1" title="Recurring task" style="font-size:0.65rem">🔁</span>` : '';
 
@@ -193,7 +190,7 @@ App.Board = {
             : '';
 
         return $(`
-            <div class="card mb-3 task-card ${priorityClass} border-start border-4 shadow-sm" data-id="${task.id}">
+            <div class="card mb-3 task-card card-task ${priorityClass} shadow-sm" data-id="${task.id}" ${borderStyle}>
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div class="d-flex align-items-center gap-1">
@@ -201,13 +198,9 @@ App.Board = {
                             ${bellIcon}
                             ${recurrenceBadge}
                         </div>
-                        <div class="dropdown">
-                            <button class="btn btn-link btn-sm p-0 text-muted" data-bs-toggle="dropdown">...</button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#" data-action="edit">${task.title}</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#" data-action="delete">Delete</a></li>
-                            </ul>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-link btn-sm p-0 text-muted" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
+                            <button class="btn btn-link btn-sm p-0 text-danger" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                     <h6 class="card-title mb-1">${task.title}</h6>
@@ -286,13 +279,27 @@ App.Modal = {
 
         async save() {
             const formData = new FormData($('#taskForm')[0]);
-            const data = Object.fromEntries(formData.entries());
+            const raw = Object.fromEntries(formData.entries());
+
+            if (!raw.category_id) {
+                $('#categorySelect').addClass('is-invalid').focus();
+                return;
+            }
+            $('#categorySelect').removeClass('is-invalid');
+
+            // Build payload with only valid tasks columns (excludes Summernote-injected file inputs)
+            const allowed = ['id', 'title', 'description', 'priority', 'category_id', 'due_date', 'task_column', 'reminder_at', 'pushover_priority'];
+            const data = {};
+            allowed.forEach(k => { if (raw[k] !== undefined) data[k] = raw[k]; });
 
             // Summernote content
             data.description = $('#summernote').summernote('code');
 
+            // Cast numeric field
+            if (data.pushover_priority !== undefined) data.pushover_priority = parseInt(data.pushover_priority, 10) || 0;
+
             // Handle empty values
-            if (!data.category_id) delete data.category_id;
+            if (!data.id) delete data.id;
             if (!data.due_date) delete data.due_date;
             if (!data.reminder_at) delete data.reminder_at;
 
@@ -386,7 +393,6 @@ App.DnD = {
     init() {
         $('.task-list').sortable({
             connectWith: '.task-list',
-            handle: '.task-card',
             placeholder: 'ui-state-highlight',
             update: async (event, ui) => {
                 const card = ui.item;
@@ -674,7 +680,6 @@ $(document).ready(() => {
         toolbar: [
             ['style', ['style']],
             ['font', ['bold', 'italic', 'underline', 'clear']],
-            ['color', ['color']],
             ['para', ['ul', 'ol', 'paragraph']],
             ['insert', ['link', 'picture', 'video', 'table', 'hr']],
             ['view', ['codeview']]
@@ -696,8 +701,19 @@ $(document).ready(() => {
     $('.datepicker').flatpickr({
         enableTime: true,
         dateFormat: 'Y-m-d H:i',
-        time_24hr: true,
-        disableMobile: 'false'
+        time_24hr: false,
+        disableMobile: 'false',
+        onReady: function(_selectedDates, _dateStr, instance) {
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'flatpickr-close-btn';
+            closeBtn.textContent = '×';
+            closeBtn.title = 'Close';
+            closeBtn.onclick = function() {
+                instance.close();
+            };
+            instance.calendarContainer.appendChild(closeBtn);
+        }
     });
 });
 
