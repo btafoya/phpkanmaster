@@ -32,6 +32,7 @@ create table tasks (
                       check (pushover_priority between -2 and 2),
   pushover_retry    integer default 30,
   pushover_expire   integer default 3600,
+  disable_notifications boolean not null default false,
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
 );
