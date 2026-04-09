@@ -18,34 +18,82 @@ A personal single-board Kanban task manager with multi-channel reminders.
 - **Web Server:** Caddy (reverse proxy with TLS)
 - **Containerization:** Docker + Docker Compose
 
-## Quick Start
+## Installation guide
 
-### 1. Clone and Configure
+You need Docker and Docker Compose. No local PHP or PostgreSQL required — everything runs in containers.
+
+### 1. Clone and configure
 
 ```bash
-git clone <repository>
+git clone https://github.com/btafoya/phpkanmaster
 cd phpkanmaster
 cp .env.example .env
 ```
 
-### 2. Generate password hash
+### 2. Set your login credentials
+
+The app uses a single hardcoded user defined in `.env`. Pick a username and generate a bcrypt hash for your password:
 
 ```bash
 php -r "echo password_hash('your_password', PASSWORD_BCRYPT);"
 ```
 
-Update `APP_PASSWORD_HASH` in `.env` with the generated hash.
+Open `.env` and update these two lines:
 
-### 3. Start Docker stack
+```dotenv
+APP_USER=admin
+APP_PASSWORD_HASH=$2y$12$...   # paste the hash here
+```
+
+If you don't have PHP locally, you can generate the hash after the containers are running:
+
+```bash
+docker compose exec app php -r "echo password_hash('your_password', PASSWORD_BCRYPT);"
+```
+
+### 3. Generate the application key
+
+```bash
+docker compose run --rm app php artisan key:generate --show
+```
+
+Copy the output and set it in `.env`:
+
+```dotenv
+APP_KEY=base64:...
+```
+
+### 4. Start the stack
 
 ```bash
 docker compose up -d --build
 ```
 
-### 4. Access application
+This builds the PHP image and starts five services: `app` (PHP-FPM), `db` (PostgreSQL 17), `postgrest` (REST API), `caddy` (reverse proxy), and `scheduler` (Laravel cron). The database schema — tables for tasks, categories, and file attachments — is created automatically from `docker/db/init/` on first run.
 
-- Login: http://localhost:8181/login
-- Default username: `admin` (or as configured in `.env`)
+### 5. Install PHP dependencies
+
+The Dockerfile does not bundle vendor dependencies. Run Composer inside the container after the stack is up:
+
+```bash
+docker compose -f docker-compose.yml exec -w /var/www/html app composer update
+```
+
+### 6. Run Laravel migrations
+
+The DB init scripts handle the kanban schema. Laravel still needs its own tables for sessions and the job queue:
+
+```bash
+docker compose exec app php artisan migrate
+```
+
+### 7. Open the app
+
+```
+http://localhost:8181/login
+```
+
+Log in with the username and password you set in step 2. The HTTPS port is 8443 if you configure TLS in `docker/caddy/Caddyfile`.
 
 ## Docker Services
 
