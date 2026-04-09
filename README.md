@@ -85,6 +85,16 @@ http://localhost:8181/login
 
 Log in with the username and password you set in step 2. The HTTPS port is 8443 if you configure TLS in `docker/caddy/Caddyfile`.
 
+### Automated install
+
+Run the included script instead of the manual steps:
+
+```bash
+./install.sh
+```
+
+The script prompts for username and password, starts the stack, installs dependencies, generates the app key and password hash, and runs migrations.
+
 ## Docker Services
 
 | Service | Description |
