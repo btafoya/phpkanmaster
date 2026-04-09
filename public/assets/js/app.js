@@ -247,7 +247,7 @@ App.Board = {
             const isDone = child.task_column === 'done';
             const completedClass = isDone ? 'text-muted text-decoration-line-through' : '';
             return `
-            <div class="d-flex align-items-center gap-2 py-1 child-task" data-id="${child.id}" data-task-column="${child.task_column}" data-action="toggle-child" style="cursor:pointer">
+            <div class="d-flex align-items-center gap-2 py-1 child-task" data-id="${child.id}" data-task-column="${child.task_column}" data-action="edit-child">
                 <span class="${completedClass}">${isDone ? '●' : '○'}</span>
                 <span class="${completedClass} flex-grow-1">${child.title}</span>
             </div>`;
@@ -478,11 +478,18 @@ App.Modal = {
             if (!data.parent_id) delete data.parent_id;
 
             // Handle subtask parent_id
-            const parentId = $('#task-parent-id').val();
+            const parentId = $('#task-parent-id').val() || $('#parentTaskSelect').val();
             if (parentId) {
                 data.parent_id = parentId;
                 // Subtasks always start in 'new' column
                 data.task_column = data.task_column || 'new';
+                // Enforce parent's category_id (inherited and read-only)
+                const parentTask = await App.Api.request(`/tasks?id=eq.${parentId}&select=category_id`);
+                if (parentTask[0]?.category_id) {
+                    data.category_id = parentTask[0].category_id;
+                } else {
+                    delete data.category_id;
+                }
                 // Skip category requirement for subtasks
             }
 
@@ -831,12 +838,10 @@ $(document).on('click', '[data-action="toggle-children"]', function(e) {
     App.Board.toggleChildren(parentId);
 });
 
-$(document).on('click', '[data-action="toggle-child"]', function(e) {
+$(document).on('click', '[data-action="edit-child"]', function(e) {
     e.stopPropagation();
-    const $el = $(this);
-    const childId = $el.data('id');
-    const currentColumn = $el.data('task-column');
-    App.Board.toggleChildComplete(childId, currentColumn);
+    const childId = $(this).data('id');
+    App.Modal.Task.open(childId);
 });
 
 $(document).on('click', '[data-action="add-subtask"]', function(e) {

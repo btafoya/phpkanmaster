@@ -77,7 +77,7 @@ PASSWORD_HASH=$(docker compose exec -T app php -r "echo password_hash('$PASSWORD
 # Update .env with username and password hash
 sed -i.bak "s/^APP_USER=.*/APP_USER=$APP_USER/" .env
 sed -i.bak "s|^APP_PASSWORD_HASH=.*|APP_PASSWORD_HASH=$PASSWORD_HASH|" .env
-sed -i.bak "s|^APP_KEY=.*|$APP_KEY|" .env
+sed -i.bak "s|^APP_KEY=.*|APP_KEY=$APP_KEY|" .env
 
 # Run migrations
 echo
