@@ -124,24 +124,28 @@ App.Board = {
     async renderFilters() {
         const categories = await App.Api.getCategories();
         const $container = $('#category-filters');
+        const $mobileContainer = $('#category-filters-mobile');
 
         // Keep the 'All' button, remove others
         $container.find('button:not([data-filter="all"])').remove();
+        $mobileContainer.find('button:not([data-filter="all"])').remove();
 
         categories.forEach(c => {
-            $container.append(`
-                <button class="btn btn-sm btn-outline-light" data-filter="${c.id}" style="border-color: ${c.color}; color: ${c.color}">
-                    ${c.name}
-                </button>
-            `);
+            const btn = `<button class="btn btn-sm btn-outline-light" data-filter="${c.id}" style="border-color: ${c.color}; color: ${c.color}">${c.name}</button>`;
+            $container.append(btn);
+            $mobileContainer.append(btn);
         });
 
-        $container.off('click').on('click', 'button', (e) => {
-            $('.btn-outline-light').removeClass('active');
-            $(e.target).addClass('active');
-            this.currentFilter = $(e.target).data('filter');
+        const filterHandler = (e) => {
+            const $btn = $(e.target).closest('button');
+            $('.btn-outline-light[data-filter]').removeClass('active');
+            $btn.addClass('active');
+            this.currentFilter = $btn.data('filter');
             this.render();
-        });
+        };
+
+        $container.off('click').on('click', 'button', filterHandler);
+        $mobileContainer.off('click').on('click', 'button', filterHandler);
     },
 
     async render() {
@@ -219,8 +223,8 @@ App.Board = {
                             ${categoryBadge}${bellIcon}${recurrenceBadge}
                         </div>
                         <div class="d-flex gap-1">
-                            <button class="btn btn-link btn-sm p-0 text-muted" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
-                            <button class="btn btn-link btn-sm p-0 text-danger" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
+                            <button class="btn btn-outline-secondary btn-sm px-2" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
+                            <button class="btn btn-outline-danger btn-sm px-2" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                     <h6 class="card-title mb-1">${task.title}</h6>
@@ -312,8 +316,8 @@ App.Board = {
                             ${recurrenceBadge}
                         </div>
                         <div class="d-flex gap-1">
-                            <button class="btn btn-link btn-sm p-0 text-muted" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
-                            <button class="btn btn-link btn-sm p-0 text-danger" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
+                            <button class="btn btn-outline-secondary btn-sm px-2" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
+                            <button class="btn btn-outline-danger btn-sm px-2" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                     <h6 class="card-title mb-1">${task.title}</h6>
@@ -584,6 +588,8 @@ App.DnD = {
         $('.task-list').sortable({
             connectWith: '.task-list',
             placeholder: 'ui-state-highlight',
+            delay: 150,
+            tolerance: 'pointer',
             update: async (event, ui) => {
                 const card = ui.item;
                 const newColumn = card.closest('.kanban-column').data('column');

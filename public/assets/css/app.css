@@ -196,3 +196,23 @@
     background: #495057;
     color: #fff;
 }
+
+/* Task card action buttons - touch friendly */
+.task-card .d-flex.gap-1 .btn {
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile adjustments for task card actions */
+@media (max-width: 575.98px) {
+    .task-card .d-flex.gap-1 {
+        gap: 0.5rem !important;
+    }
+    .task-card .d-flex.gap-1 .btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}

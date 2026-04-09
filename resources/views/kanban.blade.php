@@ -25,8 +25,9 @@
 
     <style>
         .kanban-column {
-            min-width: 300px;
-            max-width: 300px;
+            flex: 1;
+            min-width: 250px;
+            max-width: 400px;
             background: #1a1d23;
             border-radius: 0.5rem;
             padding: 1rem;
@@ -54,21 +55,58 @@
             cursor: grabbing;
             transform: scale(0.98);
         }
+        /* Mobile: single column stack */
+        @media (max-width: 575.98px) {
+            .kanban-column {
+                flex: none;
+                min-width: 100%;
+                max-width: 100%;
+                height: auto;
+                max-height: calc(100vh - 200px);
+            }
+            #kanban-board {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+        /* Touch-friendly drag and drop */
+        .task-list {
+            touch-action: pan-y;
+        }
+        .task-card {
+            touch-action: none;
+        }
     </style>
 </head>
 <body>
     {{-- Top Bar --}}
-    <nav class="navbar navbar-dark bg-dark px-3" style="min-height:0">
-        <div class="container-fluid gap-2 flex-nowrap py-1">
-            <span class="navbar-brand mb-0 h6 me-3 flex-shrink-0">phpKanMaster</span>
-            <div id="category-filters" class="d-flex align-items-center gap-1 flex-grow-1 overflow-x-auto">
-                <button class="btn btn-sm btn-outline-light active flex-shrink-0" data-filter="all">All</button>
-                <!-- Category pills injected here -->
+    <nav class="navbar navbar-dark bg-dark px-3 py-2" style="min-height:0">
+        <div class="container-fluid p-0">
+            <div class="d-flex align-items-center w-100">
+                <span class="navbar-brand mb-0 h6 me-auto flex-shrink-0">phpKanMaster</span>
+                <div id="category-filters" class="d-none d-sm-flex align-items-center justify-content-center gap-1 flex-grow-1 overflow-x-auto">
+                    <button class="btn btn-sm btn-outline-light active flex-shrink-0" data-filter="all">All</button>
+                    <!-- Category pills injected here -->
+                </div>
+                <div class="d-none d-sm-flex align-items-center gap-2 flex-shrink-0">
+                    <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
+                    <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
+                    <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
+                </div>
+                <button class="navbar-toggler border-0 p-1 ms-2 d-sm-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarActions" aria-controls="navbarActions" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
             </div>
-            <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-2">
-                <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
-                <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
-                <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
+            <div class="collapse navbar-collapse mt-2 d-sm-none" id="navbarActions">
+                <div id="category-filters-mobile" class="d-flex flex-wrap gap-1 mb-2 w-100 justify-content-center">
+                    <button class="btn btn-sm btn-outline-light active" data-filter="all">All</button>
+                    <!-- Category pills injected here -->
+                </div>
+                <div class="d-flex flex-column align-items-stretch gap-2 w-100">
+                    <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
+                    <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
+                    <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
+                </div>
             </div>
         </div>
     </nav>
@@ -286,6 +324,9 @@
 
     {{-- jQuery UI Sortable --}}
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+    {{-- jQuery UI Touch Punch for mobile drag support --}}
+    <script src="https://cdn.jsdelivr.net/npm/jquery-ui-touch-punch@0.2.3/jquery.ui.touch-punch.min.js"></script>
 
     {{-- Bootstrap JS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
