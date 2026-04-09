@@ -47,5 +47,15 @@ create or replace trigger trigger_inherit_parent_category
   before insert or update of parent_id, category_id on tasks
   for each row execute function inherit_parent_category();
 
+-- Task notes (timestamped log entries per task)
+create table if not exists task_notes (
+  id         uuid primary key default gen_random_uuid(),
+  task_id    uuid references tasks(id) on delete cascade,
+  content    text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 grant select, insert, update, delete on recurrence_rules to anon;
 grant select, insert, update on tasks to anon;
+grant select, insert, update, delete on task_notes to anon;

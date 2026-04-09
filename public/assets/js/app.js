@@ -95,6 +95,30 @@ window.App = {
             });
         },
 
+        async getNotesForTask(taskId) {
+            return this.request(`/task_notes?task_id=eq.${taskId}&select=*&order=created_at.asc`);
+        },
+
+        async createNote(data) {
+            return this.request('/task_notes', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+        },
+
+        async updateNote(id, data) {
+            return this.request(`/task_notes?id=eq.${id}`, {
+                method: 'PATCH',
+                body: JSON.stringify(data),
+            });
+        },
+
+        async deleteNote(id) {
+            return this.request(`/task_notes?id=eq.${id}`, {
+                method: 'DELETE',
+            });
+        },
+
         async getRecurrenceRuleForTask(taskId) {
             const results = await this.request(`/recurrence_rules?task_id=eq.${taskId}&limit=1`);
             return results[0] || null;
@@ -398,6 +422,10 @@ App.Modal = {
             $('#fileList').empty();
             $('#taskFilesInput').val('');
 
+            // Reset notes
+            this._hideNoteEditor();
+            $('#notesList').empty();
+
             if (taskId) {
                 const task = await App.Api.request(`/tasks?id=eq.${taskId}&select=*`);
                 const data = task[0];
@@ -424,6 +452,9 @@ App.Modal = {
                 // Load existing files for this task
                 const files = await App.Api.getFilesForTask(taskId);
                 this._renderFileList(files);
+
+                // Load existing notes for this task
+                await this._loadNotes(taskId);
             } else {
                 $('#taskModalTitle').text('Add Task');
                 $(form).find('[name="id"]').val('');
@@ -630,6 +661,112 @@ App.Modal = {
             }
 
             input.value = '';
+        },
+
+        async _loadNotes(taskId) {
+            const notes = await App.Api.getNotesForTask(taskId);
+            this._renderNotesList(notes);
+        },
+
+        _renderNotesList(notes) {
+            const $list = $('#notesList').empty();
+            notes.forEach(note => {
+                const date = new Date(note.created_at);
+                const timeStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
+                    ' at ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                $list.append(`
+                    <div class="d-flex align-items-start gap-2 px-3 py-2 bg-dark border border-secondary rounded" data-id="${note.id}">
+                        <div class="flex-grow-1 me-2">
+                            <div class="note-content small text-light">${note.content}</div>
+                            <div class="note-time small text-secondary mt-1">${timeStr}</div>
+                        </div>
+                        <button type="button" class="btn btn-sm p-0 text-warning" data-action="edit-note" data-id="${note.id}" title="Edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106L.5 8.707V10h.5v-.5L2.5 8.793z"/></svg>
+                        </button>
+                        <button type="button" class="btn btn-sm p-0 text-danger" data-action="delete-note" data-id="${note.id}" title="Delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                        </button>
+                    </div>
+                `);
+            });
+
+            $list.find('[data-action="edit-note"]').on('click', (e) => {
+                const noteId = $(e.currentTarget).data('id');
+                const note = notes.find(n => n.id === noteId);
+                if (note) this._showNoteEditor(note.id, note.content);
+            });
+
+            $list.find('[data-action="delete-note"]').on('click', async (e) => {
+                const noteId = $(e.currentTarget).data('id');
+                const confirmed = await App.Alerts.Confirm.fire({
+                    title: 'Delete this note?',
+                    icon: 'question',
+                });
+                if (!confirmed.isConfirmed) return;
+                try {
+                    await App.Api.deleteNote(noteId);
+                    $(e.currentTarget).closest('[data-id]').remove();
+                } catch (err) {
+                    App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to delete note' });
+                }
+            });
+        },
+
+        _noteEditorInitialized: false,
+        _editingNoteId: null,
+
+        _initNoteEditor() {
+            if (this._noteEditorInitialized) return;
+            this._noteEditorInitialized = true;
+            $('#noteSummernote').summernote({
+                toolbar: [['style', ['bold', 'italic', 'underline']], ['para', ['ul', 'ol']]],
+                placeholder: 'Write a note...',
+                height: 80,
+                darkMode: true,
+            });
+        },
+
+        _showNoteEditor(noteId = null, content = '') {
+            this._initNoteEditor();
+            this._editingNoteId = noteId;
+            $('#noteEditor').removeClass('d-none').show();
+            if (noteId) {
+                $('#noteSummernote').summernote('code', content);
+            } else {
+                $('#noteSummernote').summernote('code', '');
+            }
+            // Scroll into view
+            document.getElementById('noteEditor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        },
+
+        _hideNoteEditor() {
+            if (this._noteEditorInitialized) {
+                $('#noteSummernote').summernote('destroy');
+                this._noteEditorInitialized = false;
+            }
+            this._editingNoteId = null;
+            $('#noteEditor').addClass('d-none').hide();
+        },
+
+        async _saveNote(taskId) {
+            const content = $('#noteSummernote').summernote('code');
+            if (!content || content.trim() === '<p><br></p>' || content.trim() === '') {
+                App.Alerts.Toast.fire({ icon: 'warning', title: 'Note content is required' });
+                return;
+            }
+
+            try {
+                if (this._editingNoteId) {
+                    await App.Api.updateNote(this._editingNoteId, { content, updated_at: new Date().toISOString() });
+                } else {
+                    await App.Api.createNote({ task_id: taskId, content });
+                }
+                this._hideNoteEditor();
+                await this._loadNotes(taskId);
+                App.Alerts.Toast.fire({ icon: 'success', title: this._editingNoteId ? 'Note updated' : 'Note added' });
+            } catch (err) {
+                App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to save note' });
+            }
         },
     },
     Category: {
@@ -879,6 +1016,20 @@ App.Recurrence = {
         });
 
         $('#recurrenceEndDate').on('change', () => App.Recurrence._updatePreview());
+
+        // Note editor bindings
+        $('#addNoteBtn').on('click', () => {
+            App.Modal.Task._showNoteEditor();
+        });
+
+        $('#saveNoteBtn').on('click', async () => {
+            const taskId = $('[name="id"]').val();
+            if (taskId) await App.Modal.Task._saveNote(taskId);
+        });
+
+        $('#cancelNoteBtn').on('click', () => {
+            App.Modal.Task._hideNoteEditor();
+        });
     },
 };
 

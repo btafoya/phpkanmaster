@@ -193,6 +193,23 @@
                             <label class="form-label">Description</label>
                             <div name="description" id="summernote"></div>
                         </div>
+                        <div class="mb-3" id="taskNotesSection">
+                            <div class="d-flex align-items-center mb-2">
+                                <label class="form-label mb-0">Notes</label>
+                                <button type="button" class="btn btn-sm p-0 ms-auto text-info" id="addNoteBtn" title="Add note">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+                                    Add note
+                                </button>
+                            </div>
+                            <div id="notesList" class="mb-2 d-flex flex-column gap-2" style="max-height:200px;overflow-y:auto;"></div>
+                            <div id="noteEditor" class="d-none">
+                                <div name="noteContent" id="noteSummernote"></div>
+                                <div class="d-flex gap-2 mt-2">
+                                    <button type="button" class="btn btn-sm btn-primary" id="saveNoteBtn">Save note</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelNoteBtn">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row" id="priorityGroup">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Priority</label>
