@@ -29,5 +29,23 @@ update tasks set children = (
   from tasks t2 where t2.parent_id = tasks.id
 );
 
+-- Trigger function: inherit category_id from parent task
+create or replace function inherit_parent_category()
+returns trigger language plpgsql security definer as $$
+begin
+  if NEW.parent_id is not null and NEW.category_id is distinct from (
+    select category_id from tasks where id = NEW.parent_id
+  ) then
+    NEW.category_id := (select category_id from tasks where id = NEW.parent_id);
+  end if;
+  return NEW;
+end;
+$$;
+
+-- Apply trigger to tasks table for INSERT and UPDATE
+create or replace trigger trigger_inherit_parent_category
+  before insert or update of parent_id, category_id on tasks
+  for each row execute function inherit_parent_category();
+
 grant select, insert, update, delete on recurrence_rules to anon;
-grant select on tasks to anon;
+grant select, insert, update on tasks to anon;
