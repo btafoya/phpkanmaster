@@ -21,6 +21,9 @@ class SingleUserProvider implements UserProvider
         return $this->retrieveById($identifier);
     }
 
+    /**
+     * @param array<string, string> $credentials
+     */
     public function retrieveByCredentials(array $credentials): ?Authenticatable
     {
         if (empty($credentials['username'])) {

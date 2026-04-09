@@ -22,7 +22,7 @@ class TaskReminder extends Notification
         return [
             'task_id'     => $this->task->id,
             'title'       => $this->task->title,
-            'reminder_at' => $this->task->reminder_at?->toIso8601String(),
+            'reminder_at' => $this->task->reminder_at?->format('c'),
         ];
     }
 }

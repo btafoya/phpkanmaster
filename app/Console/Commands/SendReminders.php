@@ -50,7 +50,7 @@ class SendReminders extends Command
             return;
         }
 
-        if ($rule->end_date && $rule->end_date->lt(now())) {
+        if ($rule->end_date && $rule->end_date < now()) {
             $rule->update(['active' => false]);
             return;
         }
@@ -69,7 +69,9 @@ class SendReminders extends Command
         $newTask->reminder_sent = false;
         $newTask->save();
 
-        $task->children()->each(function (Task $subtask) use ($newTask): void {
+        $task->children()->each(function ($model) use ($newTask): void {
+            /** @var Task $subtask */
+            $subtask = $model;
             $newSubtask = $subtask->replicate();
             $newSubtask->id = (string) Str::uuid();
             $newSubtask->parent_id = $newTask->id;

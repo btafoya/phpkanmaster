@@ -6,10 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>phpKanMaster</title>
 
+    {{-- PWA Meta Tags --}}
+    <meta name="theme-color" content="#212529">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="phpKanMaster">
+    <meta name="application-name" content="phpKanMaster">
+    <meta name="description" content="Personal Kanban task manager">
+
     {{-- Favicons --}}
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="16x16 32x32" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json">
+
+    {{-- PWA Icons --}}
+    <link rel="icon" type="image/png" sizes="72x72" href="/icons/icon-72.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/icons/icon-96.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="/icons/icon-128.png">
+    <link rel="icon" type="image/png" sizes="144x144" href="/icons/icon-144.png">
+    <link rel="icon" type="image/png" sizes="152x152" href="/icons/icon-152.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="384x384" href="/icons/icon-384.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="/icons/icon-96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="384x384" href="/icons/icon-384.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png">
 
     {{-- Bootstrap 5.3 --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -352,6 +380,9 @@
 
     {{-- SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+
+    {{-- PWA Registration --}}
+    <script src="/assets/js/pwa.js?v={{ filemtime(public_path('assets/js/pwa.js')) }}"></script>
 
     {{-- App JS --}}
     <script>
