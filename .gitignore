@@ -23,8 +23,6 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 .superpowers/
-CLAUDE.md
-.claude/settings.json
 .worktrees/
 .playwright-mcp/
 .vscode/
@@ -32,5 +30,3 @@ graphify-out/
 .env.bak
 .serena/
 .remember/
-.claude/plugins/
-.claude/skills/launch-readiness-auditor/
