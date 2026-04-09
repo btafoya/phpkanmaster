@@ -7,7 +7,7 @@ A personal single-board Kanban task manager with multi-channel reminders.
 - **Backend:** Laravel 12.x, PHP 8.4
 - **Database:** PostgreSQL 17
 - **API:** PostgREST (direct browser access via Caddy reverse proxy)
-- **Frontend:** Bootstrap 5.3, jQuery 4.0, jQuery UI Sortable
+- **Frontend:** Bootstrap 5.3, jQuery 3.7, jQuery UI Sortable, Summernote, Flatpickr, SweetAlert2
 - **Web Server:** Caddy (reverse proxy with TLS)
 - **Containerization:** Docker + Docker Compose
 
@@ -37,7 +37,7 @@ docker compose up -d --build
 
 ### 4. Access application
 
-- Login: http://localhost/login
+- Login: http://localhost:8181/login
 - Default username: `admin` (or as configured in `.env`)
 
 ## Docker Services
@@ -48,6 +48,7 @@ docker compose up -d --build
 | `db` | PostgreSQL 17 database |
 | `postgrest` | PostgREST API (internal only) |
 | `caddy` | Reverse proxy (port 80/443) |
+| `scheduler` | Laravel scheduler (`schedule:work`) for reminders |
 
 ## Configuration
 
@@ -86,6 +87,7 @@ docker compose exec app php artisan cache:clear
 
 ```bash
 docker compose logs -f app
+docker compose logs -f scheduler
 ```
 
 ## Verification
