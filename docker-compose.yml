@@ -55,6 +55,25 @@ services:
       - phpkanmaster
     # No ports exposed — accessed only via Caddy
 
+  scheduler:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: phpkanmaster_scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan schedule:work
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    depends_on:
+      db:
+        condition: service_healthy
+      postgrest:
+        condition: service_started
+    networks:
+      - phpkanmaster
+
   caddy:
     image: caddy:latest
     container_name: phpkanmaster_caddy
