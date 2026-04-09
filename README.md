@@ -32,38 +32,14 @@ cp .env.example .env
 
 ### 2. Set your login credentials
 
-The app uses a single hardcoded user defined in `.env`. Pick a username and generate a bcrypt hash for your password:
-
-```bash
-php -r "echo password_hash('your_password', PASSWORD_BCRYPT);"
-```
-
-Open `.env` and update these two lines:
+The app uses a single user defined in `.env`. Edit these two lines — leave the password hash blank for now if you don't have PHP locally:
 
 ```dotenv
 APP_USER=admin
-APP_PASSWORD_HASH=$2y$12$...   # paste the hash here
+APP_PASSWORD_HASH=$2y$12$...   # filled in at step 5
 ```
 
-If you don't have PHP locally, you can generate the hash after the containers are running:
-
-```bash
-docker compose exec app php -r "echo password_hash('your_password', PASSWORD_BCRYPT);"
-```
-
-### 3. Generate the application key
-
-```bash
-docker compose run --rm app php artisan key:generate --show
-```
-
-Copy the output and set it in `.env`:
-
-```dotenv
-APP_KEY=base64:...
-```
-
-### 4. Start the stack
+### 3. Start the stack
 
 ```bash
 docker compose up -d --build
@@ -71,12 +47,26 @@ docker compose up -d --build
 
 This builds the PHP image and starts five services: `app` (PHP-FPM), `db` (PostgreSQL 17), `postgrest` (REST API), `caddy` (reverse proxy), and `scheduler` (Laravel cron). The database schema — tables for tasks, categories, and file attachments — is created automatically from `docker/db/init/` on first run.
 
-### 5. Install PHP dependencies
+### 4. Install PHP dependencies
 
-The Dockerfile does not bundle vendor dependencies. Run Composer inside the container after the stack is up:
+The Dockerfile does not bundle vendor dependencies. Run Composer inside the container before any `artisan` commands:
 
 ```bash
 docker compose -f docker-compose.yml exec -w /var/www/html app composer update
+```
+
+### 5. Generate the application key and password hash
+
+```bash
+docker compose exec app php artisan key:generate --show
+docker compose exec app php -r "echo password_hash('your_password', PASSWORD_BCRYPT);"
+```
+
+Copy both outputs into `.env`:
+
+```dotenv
+APP_KEY=base64:...
+APP_PASSWORD_HASH=$2y$12$...
 ```
 
 ### 6. Run Laravel migrations
