@@ -161,6 +161,8 @@ App.PWA = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    App.PWA.init();
-    App.PWA.setupConnectivityMonitoring();
+    if (window.App && window.App.PWA) {
+        App.PWA.init();
+        App.PWA.setupConnectivityMonitoring();
+    }
 });
