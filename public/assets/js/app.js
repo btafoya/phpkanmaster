@@ -229,10 +229,10 @@ App.Board = {
                         ${dueDate}
                         <span class="badge bg-light text-dark border">${task.priority}</span>
                     </div>
+                    <div class="small text-primary mt-2 add-subtask" data-action="add-subtask" data-parent-id="${task.id}" style="cursor:pointer"><i class="fas fa-plus me-1"></i>Add subtask</div>
                     ${childrenSummary}
                     <div class="child-tasks-list d-none mt-2 ps-3 border-start border-2" style="border-color: #dee2e6 !important;">
                         ${childTasksHtml}
-                        <div class="small text-primary mt-2 add-subtask" data-action="add-subtask" data-parent-id="${task.id}" style="cursor:pointer"><i class="fas fa-plus me-1"></i>Add subtask</div>
                     </div>
                 </div>
             </div>
