@@ -26,7 +26,7 @@ window.App = {
         },
 
         async getTasks() {
-            return this.request('/tasks?select=*,recurrence_rules(id,active)&order=task_column.asc,position.asc');
+            return this.request('/tasks?select=*,recurrence_rules(id,active),children:id,title,task_column,position&order=task_column.asc,position.asc');
         },
 
         async createTask(data) {
@@ -157,13 +157,126 @@ App.Board = {
             ? tasks
             : tasks.filter(t => t.category_id === this.currentFilter);
 
-        filteredTasks.forEach(task => {
-            const category = categoryMap[task.category_id];
-            const card = this.createTaskCard(task, category);
-            $(`#list-${task.task_column}`).append(card);
+        // Separate parents (no parent_id) from children (has parent_id)
+        const parents = filteredTasks.filter(t => !t.parent_id);
+        const childrenByParent = filteredTasks
+            .filter(t => t.parent_id)
+            .reduce((acc, child) => {
+                (acc[child.parent_id] ||= []).push(child);
+                return acc;
+            }, {});
+
+        parents.forEach(parent => {
+            const children = childrenByParent[parent.id] || [];
+            const category = categoryMap[parent.category_id];
+            const card = this.createParentCard(parent, children, category);
+            $(`#list-${parent.task_column}`).append(card);
         });
 
         this.updateCounts();
+    },
+
+    createParentCard(task, children, category) {
+        const priorityClass = `priority-${task.priority || 'low'}`;
+
+        const categoryBadge = category
+            ? `<span class="badge" style="background-color: ${category.color}">${category.name}</span>`
+            : '';
+
+        const borderStyle = category ? `style="border-left-color: ${category.color}"` : '';
+
+        const dueDate = task.due_date ? `<div class="small text-muted"><i class="far fa-calendar-alt"></i> ${task.due_date}</div>` : '';
+        const hasActiveRule = task.recurrence_rules?.some(r => r.active);
+        const recurrenceBadge = hasActiveRule ? `<span class="badge bg-secondary ms-1" title="Recurring task" style="font-size:0.65rem">🔁</span>` : '';
+
+        const bellIcon = task.reminder_at
+            ? `<button type="button"
+                 class="btn btn-link btn-sm p-0 ms-1 bell-icon"
+                 data-action="toggle-bell"
+                 data-id="${task.id}"
+                 data-muted="${task.disable_notifications}"
+                 title="${task.disable_notifications ? 'Notifications muted (click to enable)' : 'Notifications enabled (click to mute)'}"
+               >${task.disable_notifications ? '🔕' : '🔔'}</button>`
+            : '';
+
+        const doneCount = children.filter(c => c.task_column === 'done').length;
+        const remainingCount = children.length - doneCount;
+        const hasChildren = children.length > 0;
+
+        const childrenSummary = hasChildren
+            ? `<div class="small text-muted children-summary mt-2 pt-2 border-top children-toggle" data-action="toggle-children" data-parent-id="${task.id}" style="cursor:pointer">
+                 <i class="fas fa-chevron-down me-1"></i>${children.length} subtask${children.length !== 1 ? 's' : ''} (${remainingCount} remaining)
+               </div>`
+            : '';
+
+        const childTasksHtml = this.renderChildTasks(children);
+
+        const $card = $(`
+            <div class="card mb-3 task-card card-task ${priorityClass} shadow-sm" data-id="${task.id}" data-is-parent="true" ${borderStyle}>
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center gap-1">
+                            ${categoryBadge}${bellIcon}${recurrenceBadge}
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-link btn-sm p-0 text-muted" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
+                            <button class="btn btn-link btn-sm p-0 text-danger" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <h6 class="card-title mb-1">${task.title}</h6>
+                    <p class="card-text small text-muted mb-2">${task.description ? task.description.substring(0, 60) + '...' : ''}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        ${dueDate}
+                        <span class="badge bg-light text-dark border">${task.priority}</span>
+                    </div>
+                    ${childrenSummary}
+                    <div class="child-tasks-list d-none mt-2 ps-3 border-start border-2" style="border-color: #dee2e6 !important;">
+                        ${childTasksHtml}
+                        <div class="small text-primary mt-2 add-subtask" data-action="add-subtask" data-parent-id="${task.id}" style="cursor:pointer"><i class="fas fa-plus me-1"></i>Add subtask</div>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        return $card;
+    },
+
+    renderChildTasks(children) {
+        if (!children.length) return '';
+        return children.map(child => {
+            const isDone = child.task_column === 'done';
+            const completedClass = isDone ? 'text-muted text-decoration-line-through' : '';
+            return `
+            <div class="d-flex align-items-center gap-2 py-1 child-task" data-id="${child.id}" data-task-column="${child.task_column}" data-action="toggle-child" style="cursor:pointer">
+                <span class="${completedClass}">${isDone ? '●' : '○'}</span>
+                <span class="${completedClass} flex-grow-1">${child.title}</span>
+            </div>`;
+        }).join('');
+    },
+
+    toggleChildren(parentId) {
+        const card = document.querySelector(`.task-card[data-id="${parentId}"]`);
+        if (!card) return;
+        const childList = card.querySelector('.child-tasks-list');
+        const summary = card.querySelector('.children-summary i');
+        if (!childList || !summary) return;
+
+        if (childList.classList.contains('d-none')) {
+            childList.classList.remove('d-none');
+            summary.classList.remove('fa-chevron-down');
+            summary.classList.add('fa-chevron-up');
+        } else {
+            childList.classList.add('d-none');
+            summary.classList.remove('fa-chevron-up');
+            summary.classList.add('fa-chevron-down');
+        }
+    },
+
+    toggleChildComplete(childId, currentColumn) {
+        const newColumn = currentColumn === 'done' ? 'new' : 'done';
+        App.Api.updateTask(childId, { task_column: newColumn })
+            .then(() => App.Board.render())
+            .catch(() => App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to update subtask' }));
     },
 
     createTaskCard(task, category) {
@@ -235,6 +348,13 @@ App.Modal = {
             $select.append('<option value="">None</option>');
             categories.forEach(c => $select.append(`<option value="${c.id}">${c.name}</option>`));
 
+            // Populate parent task dropdown (exclude children and self)
+            const allTasks = await App.Api.getTasks();
+            const parentTasks = allTasks.filter(t => !t.parent_id && t.id !== taskId);
+            const $parentSelect = $('#parentTaskSelect').empty();
+            $parentSelect.append('<option value="">— none —</option>');
+            parentTasks.forEach(t => $parentSelect.append(`<option value="${t.id}">${t.title}</option>`));
+
             // Reset recurrence section
             App.Recurrence._currentRuleId = null;
             $('#repeatTask').prop('checked', false);
@@ -262,6 +382,7 @@ App.Modal = {
                 $(form).find('[name="task_column"]').val(data.task_column);
                 $(form).find('[name="reminder_at"]').val(data.reminder_at);
                 $(form).find('[name="pushover_priority"]').val(data.pushover_priority);
+                $(form).find('[name="parent_id"]').val(data.parent_id || '');
 
                 // Load recurrence rule if present
                 const rule = await App.Api.getRecurrenceRuleForTask(taskId);
@@ -274,6 +395,46 @@ App.Modal = {
                 $(form).find('[name="id"]').val('');
             }
 
+            // Reset subtask state
+            $('#task-parent-id').val('');
+            $('#taskColumnGroup, #categorySelect, #dueDateGroup, #priorityGroup, #parentTaskGroup').show();
+            $('#categorySelect').removeClass('is-invalid');
+
+            new bootstrap.Modal(document.getElementById('taskModal')).show();
+        },
+
+        async openSubtask(parentId) {
+            const form = $('#taskForm')[0];
+            form.reset();
+            $('#summernote').summernote('code', '');
+
+            // Populate categories
+            const categories = await App.Api.getCategories();
+            const $select = $('#categorySelect').empty();
+            $select.append('<option value="">None</option>');
+            categories.forEach(c => $select.append(`<option value="${c.id}">${c.name}</option>`));
+
+            // Reset recurrence section
+            App.Recurrence._currentRuleId = null;
+            $('#repeatTask').prop('checked', false);
+            $('#recurrenceFields').hide();
+            $('#recurrencePattern').val('weekly');
+            $('#recurrenceInterval').val(1);
+            $('#intervalLabel').text('week(s)');
+            $('#weekdaySelector').show();
+            $('.weekday-btn').removeClass('active btn-secondary').addClass('btn-outline-secondary');
+            $('#endNever').prop('checked', true);
+            $('#recurrenceEndDate').hide().val('');
+            $('#recurrencePreview').hide().text('');
+
+            // Pre-fill parent info
+            $('#taskModalTitle').text('Add Subtask');
+            $(form).find('[name="id"]').val('');
+            $('#task-parent-id').val(parentId);
+
+            // Hide parent-inherited fields for subtask
+            $('#taskColumnGroup, #categorySelect, #dueDateGroup, #priorityGroup, #parentTaskGroup').hide();
+
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         },
 
@@ -281,14 +442,15 @@ App.Modal = {
             const formData = new FormData($('#taskForm')[0]);
             const raw = Object.fromEntries(formData.entries());
 
-            if (!raw.category_id) {
+            // Skip category requirement for subtasks
+            if (!raw.category_id && !$('#task-parent-id').val()) {
                 $('#categorySelect').addClass('is-invalid').focus();
                 return;
             }
             $('#categorySelect').removeClass('is-invalid');
 
             // Build payload with only valid tasks columns (excludes Summernote-injected file inputs)
-            const allowed = ['id', 'title', 'description', 'priority', 'category_id', 'due_date', 'task_column', 'reminder_at', 'pushover_priority'];
+            const allowed = ['id', 'title', 'description', 'priority', 'category_id', 'due_date', 'task_column', 'reminder_at', 'pushover_priority', 'parent_id'];
             const data = {};
             allowed.forEach(k => { if (raw[k] !== undefined) data[k] = raw[k]; });
 
@@ -302,6 +464,15 @@ App.Modal = {
             if (!data.id) delete data.id;
             if (!data.due_date) delete data.due_date;
             if (!data.reminder_at) delete data.reminder_at;
+
+            // Handle subtask parent_id
+            const parentId = $('#task-parent-id').val();
+            if (parentId) {
+                data.parent_id = parentId;
+                // Subtasks always start in 'new' column
+                data.task_column = data.task_column || 'new';
+                // Skip category requirement for subtasks
+            }
 
             try {
                 let savedTaskId = data.id;
@@ -640,6 +811,27 @@ $(document).on('click', '[data-action="toggle-bell"]', function(e) {
     const taskId = $(this).data('id');
     const muted  = $(this).data('muted') === true || $(this).data('muted') === 'true';
     App.Recurrence.toggleNotifications(taskId, muted);
+});
+
+$(document).on('click', '[data-action="toggle-children"]', function(e) {
+    e.stopPropagation();
+    const parentId = $(this).data('parent-id');
+    App.Board.toggleChildren(parentId);
+});
+
+$(document).on('click', '[data-action="toggle-child"]', function(e) {
+    e.stopPropagation();
+    const $el = $(this);
+    const childId = $el.data('id');
+    const currentColumn = $el.data('task-column');
+    App.Board.toggleChildComplete(childId, currentColumn);
+});
+
+$(document).on('click', '[data-action="add-subtask"]', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const parentId = $(this).data('parent-id');
+    App.Modal.Task.openSubtask(parentId);
 });
 
 $('#saveTaskBtn').on('click', () => App.Modal.Task.save());

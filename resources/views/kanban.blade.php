@@ -125,6 +125,7 @@
                 <div class="modal-body">
                     <form id="taskForm">
                         <input type="hidden" name="id">
+                        <input type="hidden" id="task-parent-id" name="parent_id" value="">
                         <div class="mb-3">
                             <label class="form-label">Title</label>
                             <input type="text" name="title" class="form-control bg-dark text-light border-secondary" required>
@@ -133,7 +134,7 @@
                             <label class="form-label">Description</label>
                             <div name="description" id="summernote"></div>
                         </div>
-                        <div class="row">
+                        <div class="row" id="priorityGroup">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Priority</label>
                                 <select name="priority" class="form-select bg-dark text-light border-secondary">
@@ -142,6 +143,8 @@
                                     <option value="high">High</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="row" id="categoryGroup">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Category</label>
                                 <select name="category_id" id="categorySelect" class="form-select bg-dark text-light border-secondary" required>
@@ -149,11 +152,13 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="row">
+                        <div class="row" id="dueDateGroup">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Due Date</label>
                                 <input type="text" name="due_date" class="form-control bg-dark text-light border-secondary datepicker">
                             </div>
+                        </div>
+                        <div class="row" id="taskColumnGroup">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Column</label>
                                 <select name="task_column" class="form-select bg-dark text-light border-secondary">
@@ -162,6 +167,14 @@
                                     <option value="review">Review</option>
                                     <option value="on_hold">On Hold</option>
                                     <option value="done">Done</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" id="parentTaskGroup">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Parent Task</label>
+                                <select name="parent_id" id="parentTaskSelect" class="form-select bg-dark text-light border-secondary">
+                                    <option value="">— none —</option>
                                 </select>
                             </div>
                         </div>

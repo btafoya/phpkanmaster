@@ -19,4 +19,15 @@ create table if not exists recurrence_rules (
 create index if not exists idx_recurrence_rules_active_next
   on recurrence_rules (active, next_occurrence_at);
 
+-- Index on parent_id for efficient child lookups
+create index if not exists idx_tasks_parent_id on tasks (parent_id);
+
+-- Computed children column for PostgREST
+alter table tasks add column if not exists children jsonb;
+update tasks set children = (
+  select jsonb_agg(jsonb_build_object('id', id, 'title', title, 'task_column', task_column, 'position', position) order by position)
+  from tasks t2 where t2.parent_id = tasks.id
+);
+
 grant select, insert, update, delete on recurrence_rules to anon;
+grant select on tasks to anon;
