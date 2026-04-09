@@ -14,4 +14,9 @@ class SendRemindersTest extends TestCase
     {
         $this->assertTrue(Schema::hasColumn('tasks', 'disable_notifications'));
     }
+
+    public function test_recurrence_rules_table_exists(): void
+    {
+        $this->assertTrue(Schema::hasTable('recurrence_rules'));
+    }
 }

@@ -37,6 +37,20 @@ create table tasks (
   updated_at        timestamptz not null default now()
 );
 
+-- Recurrence rules
+create table recurrence_rules (
+  id                  uuid primary key default gen_random_uuid(),
+  task_id             uuid references tasks(id) on delete cascade,
+  rrule               text not null,
+  next_occurrence_at  timestamptz not null,
+  end_date            date,
+  active              boolean not null default true,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
+);
+
+create index idx_recurrence_rules_active_next on recurrence_rules (active, next_occurrence_at);
+
 -- Task file attachments
 create table task_files (
   id         uuid primary key default gen_random_uuid(),
