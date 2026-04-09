@@ -220,8 +220,9 @@
         </div>
     </div>
 
-    {{-- jQuery 4.0 --}}
-    <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+    {{-- jQuery 3.7.1 --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-migrate-4.0.2.min.js"></script>
 
     {{-- jQuery UI Sortable --}}
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>

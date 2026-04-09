@@ -86,6 +86,8 @@ window.App = {
             });
         },
     },
+};
+
 App.Board = {
     currentFilter: 'all',
 
@@ -183,7 +185,8 @@ App.Board = {
             $(this).find('.task-count').text(count);
         });
     }
-},
+};
+
 App.Modal = {
     Task: {
         async open(taskId = null) {
@@ -280,7 +283,8 @@ App.Modal = {
             }
         }
     }
-},
+};
+
 App.DnD = {
     init() {
         $('.task-list').sortable({
@@ -308,8 +312,6 @@ App.DnD = {
             }
         }).disableSelection();
     }
-},
-App.Alerts = {}
 };
 
 App.Alerts = {
@@ -400,14 +402,34 @@ $(document).on('input', '[data-action="update-color"]', async function() {
 $(document).ready(() => {
     $('#summernote').summernote({
         placeholder: 'Task description...',
-        tabbar: ['style', ['bold', 'italic', 'underline'], ['list', 'unordered'], ['paragraph']],
         height: 200,
-        toolbar: ['style', ['font', 'color'], ['para', 'ul', 'ol'], ['table', 'insert'], ['view']]
+        toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link', 'picture', 'video', 'table', 'hr']],
+            ['view', ['codeview']]
+        ],
+        callbacks: {
+            onImageUpload: function(files) {
+                // Convert image to base64 and insert
+                for (let i = 0; i < files.length; i++) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#summernote').summernote('insertImage', e.target.result);
+                    };
+                    reader.readAsDataURL(files[i]);
+                }
+            }
+        }
     });
 
     $('.datepicker').flatpickr({
-        dateFormat: 'Y-m-d',
-        disableMobile: 'true'
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+        time_24hr: true,
+        disableMobile: 'false'
     });
 });
 

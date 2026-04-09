@@ -35,3 +35,75 @@
 .card-task.priority-low {
     border-left-color: #28a745;
 }
+
+/* Summernote Dark Theme */
+.note-editor.note-frame {
+    border-color: #495057 !important;
+    background-color: #212529 !important;
+}
+
+.note-editor.note-frame .note-toolbar {
+    background-color: #343a40 !important;
+    border-color: #495057 !important;
+}
+
+.note-editor.note-frame .note-toolbar .note-btn {
+    color: #dee2e6 !important;
+    background-color: transparent !important;
+}
+
+.note-editor.note-frame .note-toolbar .note-btn:hover {
+    background-color: #495057 !important;
+}
+
+.note-editor.note-frame .note-editing-area {
+    background-color: #212529 !important;
+}
+
+.note-editor.note-frame .note-editable {
+    color: #dee2e6 !important;
+    background-color: #212529 !important;
+}
+
+.note-editor.note-frame .note-placeholder {
+    color: #6c757d !important;
+}
+
+/* Flatpickr Dark Theme */
+.flatpickr-calendar {
+    background: #212529 !important;
+    border-color: #495057 !important;
+}
+
+.flatpickr-calendar .flatpickr-day {
+    color: #dee2e6 !important;
+}
+
+.flatpickr-calendar .flatpickr-day:hover,
+.flatpickr-calendar .flatpickr-day.selected {
+    background: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+.flatpickr-calendar .flatpickr-day.today {
+    border-color: #0d6efd !important;
+}
+
+.flatpickr-calendar .flatpickr-month,
+.flatpickr-calendar .flatpickr-current-month,
+.flatpickr-calendar .flatpickr-monthDropdown-months,
+.flatpickr-calendar .numInputWrapper span {
+    color: #dee2e6 !important;
+}
+
+.flatpickr-calendar .flatpickr-time {
+    border-top-color: #495057 !important;
+}
+
+.flatpickr-calendar .flatpickr-time .numInputWrapper {
+    background: #343a40 !important;
+}
+
+.flatpickr-calendar .flatpickr-time .flatpickr-am-pm {
+    color: #dee2e6 !important;
+}

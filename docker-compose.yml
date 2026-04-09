@@ -60,11 +60,11 @@ services:
     container_name: phpkanmaster_caddy
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8181:80"
       - "8443:443"
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./public:/var/www/html/public:ro
+      - ./:/var/www/html
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
