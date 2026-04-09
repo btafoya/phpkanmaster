@@ -882,6 +882,16 @@ App.Recurrence = {
     },
 };
 
+// Global error handlers
+window.addEventListener('error', (e) => {
+    if (e.message && !e.message.startsWith('ResizeObserver') && !e.message.startsWith('Non-Error')) {
+        App.Alerts?.Toast.fire({ icon: 'error', title: 'An error occurred' });
+    }
+});
+window.addEventListener('unhandledrejection', () => {
+    App.Alerts?.Toast.fire({ icon: 'error', title: 'An error occurred' });
+});
+
 $(document).ready(async () => {
     await App.Board.init();
     App.DnD.init();

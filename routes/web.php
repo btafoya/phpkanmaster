@@ -14,3 +14,8 @@ Route::middleware('auth:single')->group(function () {
         return view('kanban');
     })->name('kanban');
 });
+
+// Public pages
+Route::get('/privacy', function () {
+    return view('privacy');
+})->name('privacy');

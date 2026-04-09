@@ -124,6 +124,73 @@ NOTIFY_TWILIO=false
 NOTIFY_ROCKETCHAT=false
 ```
 
+## Production Deployment
+
+### Prerequisites
+
+- Docker and Docker Compose
+- A domain name pointed to your server (optional, for TLS)
+- `docker` and `docker compose` commands available
+
+### Steps
+
+**1. Copy the production environment template:**
+
+```bash
+cp .env.production.example .env
+```
+
+**2. Set your credentials in `.env`:**
+
+```dotenv
+APP_KEY=          # Run: docker compose exec app php artisan key:generate
+APP_DEBUG=false
+APP_URL=https://your-domain.com
+
+APP_PASSWORD_HASH= # Run: docker compose exec app php -r "echo password_hash('your_password', PASSWORD_BCRYPT);"
+```
+
+**3. Set a strong database password in `docker-compose.yml`:**
+
+In the `db` service, set `POSTGRES_PASSWORD` to a strong random value and add `POSTGREST_PASSWORD` environment variable.
+
+**4. Start the stack:**
+
+```bash
+docker compose up -d --build
+```
+
+**5. Run migrations:**
+
+```bash
+docker compose exec app php artisan migrate --force
+```
+
+**6. Caddy handles TLS automatically** — as long as port 80 and 443 are open, Let's Encrypt certificates are provisioned on first request.
+
+### Key production settings
+
+| Variable | Value | Why |
+|---|---|---|
+| `APP_ENV` | `production` | Disables debug mode |
+| `APP_DEBUG` | `false` | Hides stack traces |
+| `LOG_STACK` | `daily` | Rotates logs daily, keeps 14 days |
+| `LOG_LEVEL` | `warning` | Reduces log noise |
+| `SESSION_ENCRYPT` | `true` | Encrypts session cookies |
+
+### Logs
+
+```bash
+# Application logs (rotated daily)
+docker compose exec app cat storage/logs/laravel-$(date +%Y-%m-%d).log
+
+# All container logs
+docker compose logs -f
+
+# Caddy logs (includes access log)
+docker compose logs -f caddy
+```
+
 ## Development
 
 ### Run migrations

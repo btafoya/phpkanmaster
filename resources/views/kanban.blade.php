@@ -174,7 +174,7 @@
 
     {{-- Task Modal --}}
     <div class="modal fade" id="taskModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
             <div class="modal-content bg-dark text-light border-secondary">
                 <div class="modal-header border-secondary">
                     <h5 class="modal-title" id="taskModalTitle">Add Task</h5>

@@ -9,6 +9,15 @@
     handle {
         root * /var/www/html/public
 
+        # Security headers
+        header {
+            X-Frame-Options "SAMEORIGIN"
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "strict-origin-when-cross-origin"
+            Permissions-Policy "camera=(), microphone=(), geolocation=()"
+            -Server
+        }
+
         # Try files, fall back to index.php
         try_files {path} {path}/ /index.php
 

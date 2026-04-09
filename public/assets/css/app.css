@@ -255,6 +255,34 @@
     transform: scale(0.98);
 }
 
+/* Tablet: 2 columns across */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+    .kanban-column {
+        min-width: 45%;
+        max-width: 45%;
+    }
+    #kanban-board {
+        flex-wrap: wrap;
+    }
+}
+
+/* Touch device refinements - remove hover effects, ensure touch targets */
+@media (hover: none) and (pointer: coarse) {
+    .task-card:hover {
+        transform: none;
+    }
+    .btn:hover {
+        opacity: 1;
+    }
+    .kanban-column:hover {
+        box-shadow: none;
+    }
+    /* Ensure all interactive elements are touch-friendly */
+    .form-control, .form-select, .btn {
+        min-height: 44px;
+    }
+}
+
 /* Mobile: single column stack */
 @media (max-width: 575.98px) {
     .kanban-column {
