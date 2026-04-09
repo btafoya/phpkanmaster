@@ -7,6 +7,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Only run on PostgreSQL — plpgsql language doesn't exist in SQLite
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::statement("
             create or replace function inherit_parent_category()
             returns trigger language plpgsql security definer as \$\$
@@ -37,6 +42,9 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
         DB::statement('drop trigger if exists trigger_inherit_parent_category on tasks');
         DB::statement('drop function if exists inherit_parent_category');
     }

@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\RecurrenceRule;
 use App\Models\Task;
 use App\Notifications\TaskReminder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class SendRemindersTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseMigrations;
 
     public function test_tasks_table_has_disable_notifications_column(): void
     {

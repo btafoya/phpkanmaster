@@ -102,6 +102,10 @@
                     <button class="btn btn-sm btn-outline-light active flex-shrink-0" data-filter="all">All</button>
                     <!-- Category pills injected here -->
                 </div>
+                <div class="d-none d-sm-flex align-items-center flex-shrink-0">
+                    <input type="text" id="taskSearch" class="form-control form-control-sm bg-dark text-light border-secondary"
+                        placeholder="Search tasks..." style="width: 160px;">
+                </div>
                 <div class="d-none d-sm-flex align-items-center gap-2 flex-shrink-0">
                     <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
                     <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
@@ -251,6 +255,11 @@
                                         value="0" min="-2" max="2">
                                 </div>
                             </div>
+                        </div>
+                        <div class="mb-3" id="fileAttachmentSection">
+                            <label class="form-label">Attachments</label>
+                            <div id="fileList" class="mb-2 d-flex flex-wrap gap-2"></div>
+                            <input type="file" id="taskFilesInput" class="form-control form-control-sm bg-dark text-light border-secondary" multiple>
                         </div>
                         <div class="mb-3 p-3 bg-dark border border-secondary rounded">
                             <div class="d-flex align-items-center mb-2">

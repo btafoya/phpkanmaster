@@ -25,8 +25,13 @@ window.App = {
             return response.json();
         },
 
-        async getTasks() {
-            return this.request('/tasks?select=*,recurrence_rules(id,active),children:id,title,task_column,position&order=task_column.asc,position.asc');
+        async getTasks(searchTerm = '') {
+            let query = '/tasks?select=*,recurrence_rules(id,active),children:id,title,task_column,position&order=task_column.asc,position.asc';
+            if (searchTerm) {
+                const encoded = encodeURIComponent(searchTerm);
+                query += `&or=(title.ilike.*${encoded}*,description.ilike.*${encoded}*)`;
+            }
+            return this.request(query);
         },
 
         async createTask(data) {
@@ -51,6 +56,10 @@ window.App = {
 
         async getCategories() {
             return this.request('/categories?select=*&order=name.asc');
+        },
+
+        async getFilesForTask(taskId) {
+            return this.request(`/task_files?task_id=eq.${taskId}&select=*&order=created_at.asc`);
         },
 
         async createCategory(data) {
@@ -115,10 +124,23 @@ window.App = {
 
 App.Board = {
     currentFilter: 'all',
+    currentSearch: '',
 
     async init() {
         await this.renderFilters();
+        this.initSearch();
         await this.render();
+    },
+
+    initSearch() {
+        let debounceTimer;
+        $('#taskSearch').on('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                this.currentSearch = e.target.value.trim();
+                this.render();
+            }, 300);
+        });
     },
 
     async renderFilters() {
@@ -149,7 +171,7 @@ App.Board = {
     },
 
     async render() {
-        const tasks = await App.Api.getTasks();
+        const tasks = await App.Api.getTasks(this.currentSearch);
         const categories = await App.Api.getCategories();
 
         const categoryMap = Object.fromEntries(categories.map(c => [c.id, c]));
@@ -372,6 +394,10 @@ App.Modal = {
             $('#recurrenceEndDate').hide().val('');
             $('#recurrencePreview').hide().text('');
 
+            // Reset file attachments
+            $('#fileList').empty();
+            $('#taskFilesInput').val('');
+
             if (taskId) {
                 const task = await App.Api.request(`/tasks?id=eq.${taskId}&select=*`);
                 const data = task[0];
@@ -394,6 +420,10 @@ App.Modal = {
                     App.Recurrence._currentRuleId = rule.id;
                     App.Recurrence._loadRule(rule);
                 }
+
+                // Load existing files for this task
+                const files = await App.Api.getFilesForTask(taskId);
+                this._renderFileList(files);
             } else {
                 $('#taskModalTitle').text('Add Task');
                 $(form).find('[name="id"]').val('');
@@ -538,13 +568,69 @@ App.Modal = {
                     await App.Api.deleteRecurrenceRule(existingRuleId);
                 }
 
+                // Upload pending files
+                await this._uploadPendingFiles(savedTaskId);
+
                 App.Alerts.Toast.fire({ icon: 'success', title: 'Task saved' });
                 bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
                 await App.Board.render();
             } catch (e) {
                 App.Alerts.Toast.fire({ icon: 'error', title: e.message });
             }
-        }
+        },
+
+        _renderFileList(files) {
+            const $list = $('#fileList').empty();
+            files.forEach(file => {
+                const isImage = file.mime_type && file.mime_type.startsWith('image/');
+                const icon = isImage
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/></svg>`
+                    : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></svg>`;
+                $list.append(`
+                    <div class="d-flex align-items-center gap-2 px-2 py-1 bg-dark border border-secondary rounded" data-id="${file.id}">
+                        <span class="text-info">${icon}</span>
+                        <span class="small text-light text-truncate" style="max-width:150px">${file.filename}</span>
+                        <button type="button" class="btn btn-sm p-0 text-danger" data-action="delete-file" data-id="${file.id}" title="Remove">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+                        </button>
+                    </div>
+                `);
+            });
+
+            // Wire up delete buttons
+            $list.find('[data-action="delete-file"]').on('click', async (e) => {
+                const fileId = $(e.currentTarget).data('id');
+                try {
+                    await App.Api.deleteFile(fileId);
+                    $(e.currentTarget).closest('[data-id]').remove();
+                } catch (err) {
+                    App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to delete file' });
+                }
+            });
+        },
+
+        async _uploadPendingFiles(taskId) {
+            const input = document.getElementById('taskFilesInput');
+            if (!input.files || input.files.length === 0) return;
+
+            for (const file of input.files) {
+                const reader = new FileReader();
+                const data = await new Promise((resolve, reject) => {
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+
+                await App.Api.uploadFile({
+                    task_id:   taskId,
+                    filename:  file.name,
+                    mime_type: file.type || 'application/octet-stream',
+                    data:      data,
+                });
+            }
+
+            input.value = '';
+        },
     },
     Category: {
         async open() {
