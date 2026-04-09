@@ -405,6 +405,10 @@ App.Modal = {
 
         async openSubtask(parentId) {
             const form = $('#taskForm')[0];
+
+            // Set parent-id BEFORE reset so it survives the reset
+            $('#task-parent-id').val(parentId);
+
             form.reset();
             $('#summernote').summernote('code', '');
 
@@ -431,6 +435,12 @@ App.Modal = {
             $('#taskModalTitle').text('Add Subtask');
             $(form).find('[name="id"]').val('');
             $('#task-parent-id').val(parentId);
+
+            // Inherit category from parent task
+            const parentTask = await App.Api.request(`/tasks?id=eq.${parentId}&select=category_id`);
+            if (parentTask[0]?.category_id) {
+                $(form).find('[name="category_id"]').val(parentTask[0].category_id);
+            }
 
             // Hide parent-inherited fields for subtask
             $('#taskColumnGroup, #categorySelect, #dueDateGroup, #priorityGroup, #parentTaskGroup').hide();
@@ -462,8 +472,10 @@ App.Modal = {
 
             // Handle empty values
             if (!data.id) delete data.id;
+            if (!data.category_id) delete data.category_id;
             if (!data.due_date) delete data.due_date;
             if (!data.reminder_at) delete data.reminder_at;
+            if (!data.parent_id) delete data.parent_id;
 
             // Handle subtask parent_id
             const parentId = $('#task-parent-id').val();
