@@ -349,7 +349,8 @@
                 </div>
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" id="saveTaskBtn" class="btn btn-primary">Save Task</button>
+                    <button type="button" id="saveTaskBtn" class="btn btn-primary d-none">Save Task</button>
+                    <button type="button" id="editTaskBtn" class="btn btn-primary">Edit Task</button>
                 </div>
             </div>
         </div>

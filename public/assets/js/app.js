@@ -269,6 +269,7 @@ App.Board = {
                             ${categoryBadge}${bellIcon}${recurrenceBadge}
                         </div>
                         <div class="d-flex gap-1">
+                            <button class="btn btn-outline-info btn-sm px-2" data-action="view" title="View task"><i class="fas fa-eye"></i></button>
                             <button class="btn btn-outline-secondary btn-sm px-2" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
                             <button class="btn btn-outline-danger btn-sm px-2" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
                         </div>
@@ -362,6 +363,7 @@ App.Board = {
                             ${recurrenceBadge}
                         </div>
                         <div class="d-flex gap-1">
+                            <button class="btn btn-outline-info btn-sm px-2" data-action="view" title="View task"><i class="fas fa-eye"></i></button>
                             <button class="btn btn-outline-secondary btn-sm px-2" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
                             <button class="btn btn-outline-danger btn-sm px-2" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
                         </div>
@@ -387,7 +389,7 @@ App.Board = {
 
 App.Modal = {
     Task: {
-        async open(taskId = null) {
+        async open(taskId = null, mode = 'edit') {
             const form = $('#taskForm')[0];
             form.reset();
             $('#summernote').summernote('code', '');
@@ -426,11 +428,19 @@ App.Modal = {
             this._hideNoteEditor();
             $('#notesList').empty();
 
+            // In view mode, hide form fields and show Edit button; in edit mode show Save
+            const isView = mode === 'view';
+            $('#saveTaskBtn').toggleClass('d-none', isView);
+            $('#editTaskBtn').toggleClass('d-none', !isView);
+            // Make all form inputs read-only in view mode
+            $('#taskForm input, #taskForm select, #taskForm textarea').prop('readonly', isView);
+            $('#summernote').summernote(isView ? 'disable' : 'enable');
+
             if (taskId) {
                 const task = await App.Api.request(`/tasks?id=eq.${taskId}&select=*`);
                 const data = task[0];
 
-                $('#taskModalTitle').text('Edit Task');
+                $('#taskModalTitle').text(isView ? 'View Task' : 'Edit Task');
                 $(form).find('[name="id"]').val(data.id);
                 $(form).find('[name="title"]').val(data.title);
                 $('#summernote').summernote('code', data.description || '');
@@ -1051,6 +1061,12 @@ $(document).ready(async () => {
 });
 
 // Event handlers
+$(document).on('click', '[data-action="view"]', function(e) {
+    e.preventDefault();
+    const id = $(this).closest('.task-card').data('id');
+    App.Modal.Task.open(id, 'view');
+});
+
 $(document).on('click', '[data-action="edit"]', function(e) {
     e.preventDefault();
     const id = $(this).closest('.task-card').data('id');
@@ -1105,6 +1121,17 @@ $(document).on('click', '[data-action="add-subtask"]', function(e) {
 });
 
 $('#saveTaskBtn').on('click', () => App.Modal.Task.save());
+
+$('#editTaskBtn').on('click', function() {
+    const taskId = $('[name="id"]').val();
+    if (!taskId) return;
+    // Switch from view to edit mode
+    $('#saveTaskBtn').removeClass('d-none');
+    $(this).addClass('d-none');
+    $('#taskForm input, #taskForm select, #taskForm textarea').prop('readonly', false);
+    $('#summernote').summernote('enable');
+    $('#taskModalTitle').text('Edit Task');
+});
 
 // Category event handlers
 $('#addCategoryBtn').on('click', () => App.Modal.Category.saveNew());
