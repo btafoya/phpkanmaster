@@ -26,7 +26,7 @@ window.App = {
         },
 
         async getTasks() {
-            return this.request('/tasks?select=*&order=task_column.asc,position.asc');
+            return this.request('/tasks?select=*,recurrence_rules(id,active)&order=task_column.asc,position.asc');
         },
 
         async createTask(data) {
@@ -82,6 +82,31 @@ window.App = {
 
         async deleteFile(id) {
             return this.request(`/task_files?id=eq.${id}`, {
+                method: 'DELETE',
+            });
+        },
+
+        async getRecurrenceRuleForTask(taskId) {
+            const results = await this.request(`/recurrence_rules?task_id=eq.${taskId}&limit=1`);
+            return results[0] || null;
+        },
+
+        async createRecurrenceRule(data) {
+            return this.request('/recurrence_rules', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+        },
+
+        async updateRecurrenceRule(id, data) {
+            return this.request(`/recurrence_rules?id=eq.${id}`, {
+                method: 'PATCH',
+                body: JSON.stringify(data),
+            });
+        },
+
+        async deleteRecurrenceRule(id) {
+            return this.request(`/recurrence_rules?id=eq.${id}`, {
                 method: 'DELETE',
             });
         },
@@ -154,11 +179,28 @@ App.Board = {
 
         const dueDate = task.due_date ? `<div class="small text-muted"><i class="far fa-calendar-alt"></i> ${task.due_date}</div>` : '';
 
+        const hasActiveRule = task.recurrence_rules?.some(r => r.active);
+        const recurrenceBadge = hasActiveRule ? `<span class="badge bg-secondary ms-1" title="Recurring task" style="font-size:0.65rem">🔁</span>` : '';
+
+        const bellIcon = task.reminder_at
+            ? `<button type="button"
+                 class="btn btn-link btn-sm p-0 ms-1 bell-icon"
+                 data-action="toggle-bell"
+                 data-id="${task.id}"
+                 data-muted="${task.disable_notifications}"
+                 title="${task.disable_notifications ? 'Notifications muted (click to enable)' : 'Notifications enabled (click to mute)'}"
+               >${task.disable_notifications ? '🔕' : '🔔'}</button>`
+            : '';
+
         return $(`
             <div class="card mb-3 task-card ${priorityClass} border-start border-4 shadow-sm" data-id="${task.id}">
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        ${categoryBadge}
+                        <div class="d-flex align-items-center gap-1">
+                            ${categoryBadge}
+                            ${bellIcon}
+                            ${recurrenceBadge}
+                        </div>
                         <div class="dropdown">
                             <button class="btn btn-link btn-sm p-0 text-muted" data-bs-toggle="dropdown">...</button>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -335,9 +377,172 @@ App.Alerts = {
     })
 };
 
+App.Recurrence = {
+    _currentRuleId: null,
+
+    buildRRule(formData) {
+        const freqMap = {
+            daily:           'DAILY',
+            every_other_day: 'DAILY',
+            weekly:          'WEEKLY',
+            monthly:         'MONTHLY',
+            yearly:          'YEARLY',
+        };
+
+        const dtstart = formData.reminder_at
+            ? new Date(formData.reminder_at).toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z'
+            : new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
+
+        const rrule = {
+            FREQ:    freqMap[formData.pattern],
+            DTSTART: dtstart,
+        };
+
+        if (formData.pattern === 'every_other_day') {
+            rrule.INTERVAL = 2;
+        } else if (formData.interval > 1) {
+            rrule.INTERVAL = formData.interval;
+        }
+
+        if (formData.pattern === 'weekly' && formData.weekDays.length > 0) {
+            rrule.BYDAY = formData.weekDays.join(',');
+        }
+
+        if (formData.endType === 'on_date' && formData.endDate) {
+            rrule.UNTIL = new Date(formData.endDate).toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
+        }
+
+        return JSON.stringify(rrule);
+    },
+
+    humanReadable(rruleJson) {
+        try {
+            const r = JSON.parse(rruleJson);
+            const interval = r.INTERVAL || 1;
+            const freqLabel = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', YEARLY: 'year' };
+            const unit = freqLabel[r.FREQ] || r.FREQ.toLowerCase();
+            const days = r.BYDAY ? ` on ${r.BYDAY}` : '';
+            const until = r.UNTIL ? ` until ${r.UNTIL.slice(0, 8)}` : '';
+            return `Every ${interval > 1 ? interval + ' ' : ''}${unit}${interval > 1 ? 's' : ''}${days}${until}`;
+        } catch {
+            return 'Custom recurrence';
+        }
+    },
+
+    async toggleNotifications(taskId, currentMuted) {
+        const newMuted = !currentMuted;
+        const result = await App.Alerts.Confirm.fire({
+            title: newMuted ? 'Mute notifications for this task?' : 'Enable notifications for this task?',
+            icon:  'question',
+        });
+        if (!result.isConfirmed) return;
+
+        try {
+            await App.Api.request(`/tasks?id=eq.${taskId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ disable_notifications: newMuted }),
+            });
+            App.Alerts.Toast.fire({
+                icon:  'success',
+                title: newMuted ? 'Notifications muted' : 'Notifications enabled',
+            });
+            this.updateBellIcon(taskId, newMuted);
+        } catch {
+            App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to update notifications' });
+        }
+    },
+
+    updateBellIcon(taskId, muted) {
+        const btn = document.querySelector(`.bell-icon[data-id="${taskId}"]`);
+        if (!btn) return;
+        btn.textContent = muted ? '🔕' : '🔔';
+        btn.dataset.muted = String(muted);
+        btn.title = muted ? 'Notifications muted (click to enable)' : 'Notifications enabled (click to mute)';
+    },
+
+    _loadRule(rule) {
+        const r = JSON.parse(rule.rrule);
+        const patternMap = {
+            DAILY: r.INTERVAL === 2 ? 'every_other_day' : 'daily',
+            WEEKLY: 'weekly',
+            MONTHLY: 'monthly',
+            YEARLY: 'yearly',
+        };
+        const pattern = patternMap[r.FREQ] || 'weekly';
+
+        $('#repeatTask').prop('checked', true);
+        $('#recurrenceFields').show();
+        $('#recurrencePattern').val(pattern);
+        $('#recurrenceInterval').val(r.INTERVAL && r.INTERVAL !== 2 ? r.INTERVAL : 1);
+
+        if (r.BYDAY) {
+            r.BYDAY.split(',').forEach(day => {
+                $(`.weekday-btn[data-day="${day}"]`).removeClass('btn-outline-secondary').addClass('btn-secondary active');
+            });
+        }
+
+        if (r.UNTIL) {
+            $('#endOnDate').prop('checked', true);
+            $('#recurrenceEndDate').show().val(r.UNTIL.slice(0, 8));
+        }
+
+        this._updatePreview();
+    },
+
+    _getFormData() {
+        return {
+            pattern:     $('#recurrencePattern').val(),
+            interval:    parseInt($('#recurrenceInterval').val(), 10) || 1,
+            weekDays:    $('.weekday-btn.active').map(function() { return $(this).data('day'); }).get(),
+            endType:     $('input[name="recurrenceEnd"]:checked').val(),
+            endDate:     $('#recurrenceEndDate').val(),
+            reminder_at: $('[name="reminder_at"]').val(),
+        };
+    },
+
+    _updatePreview() {
+        const rruleJson = this.buildRRule(this._getFormData());
+        const readable  = this.humanReadable(rruleJson);
+        $('#recurrencePreview').text(readable).show();
+    },
+
+    initModalBindings() {
+        $('#repeatTask').on('change', function() {
+            $('#recurrenceFields').toggle(this.checked);
+            if (this.checked) App.Recurrence._updatePreview();
+        });
+
+        $('#recurrencePattern').on('change', function() {
+            const isWeekly = $(this).val() === 'weekly';
+            $('#weekdaySelector').toggle(isWeekly);
+            const labels = {
+                daily: 'day(s)', every_other_day: 'day(s)',
+                weekly: 'week(s)', monthly: 'month(s)', yearly: 'year(s)',
+            };
+            $('#intervalLabel').text(labels[$(this).val()] || 'unit(s)');
+            App.Recurrence._updatePreview();
+        });
+
+        $('#recurrenceInterval').on('input', () => App.Recurrence._updatePreview());
+
+        $(document).on('click', '.weekday-btn', function() {
+            $(this).toggleClass('btn-outline-secondary btn-secondary active');
+            App.Recurrence._updatePreview();
+        });
+
+        $('input[name="recurrenceEnd"]').on('change', function() {
+            $('#recurrenceEndDate').toggle($(this).val() === 'on_date');
+            App.Recurrence._updatePreview();
+        });
+
+        $('#recurrenceEndDate').on('change', () => App.Recurrence._updatePreview());
+    },
+};
+
 $(document).ready(async () => {
     await App.Board.init();
     App.DnD.init();
+    App.Recurrence.initModalBindings();
     console.log('phpKanMaster board initialized');
 });
 
@@ -366,6 +571,14 @@ $(document).on('click', '[data-action="delete"]', async function(e) {
             App.Alerts.Toast.fire({ icon: 'error', title: 'Delete failed' });
         }
     }
+});
+
+$(document).on('click', '[data-action="toggle-bell"]', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const taskId = $(this).data('id');
+    const muted  = $(this).data('muted') === true || $(this).data('muted') === 'true';
+    App.Recurrence.toggleNotifications(taskId, muted);
 });
 
 $('#saveTaskBtn').on('click', () => App.Modal.Task.save());
