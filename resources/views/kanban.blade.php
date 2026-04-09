@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>phpKanMaster</title>
+
+    {{-- Favicons --}}
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16 32x32" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     {{-- Bootstrap 5.3 --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -35,26 +41,31 @@
             display: flex;
             flex-direction: column;
         }
+
         .task-list {
             flex-grow: 1;
             overflow-y: auto;
             min-height: 100px;
         }
+
         .ui-state-highlight {
             height: 100px;
-            background: rgba(255,255,255,0.1) !important;
+            background: rgba(255, 255, 255, 0.1) !important;
             border: 2px dashed #444;
             border-radius: 0.5rem;
             margin-bottom: 1rem;
         }
+
         .task-card {
             cursor: grab;
             transition: transform 0.1s;
         }
+
         .task-card:active {
             cursor: grabbing;
             transform: scale(0.98);
         }
+
         /* Mobile: single column stack */
         @media (max-width: 575.98px) {
             .kanban-column {
@@ -64,27 +75,65 @@
                 height: auto;
                 max-height: calc(100vh - 200px);
             }
+
             #kanban-board {
                 flex-direction: column;
                 gap: 1rem;
             }
         }
+
         /* Touch-friendly drag and drop */
         .task-list {
             touch-action: pan-y;
         }
+
         .task-card {
             touch-action: none;
         }
     </style>
 </head>
+
 <body>
     {{-- Top Bar --}}
-    <nav class="navbar navbar-dark bg-dark px-3 py-2" style="min-height:0">
+    <nav class="navbar navbar-dark bg-dark px-3 py-1" style="min-height:0">
         <div class="container-fluid p-0">
             <div class="d-flex align-items-center w-100">
-                <span class="navbar-brand mb-0 h6 me-auto flex-shrink-0">phpKanMaster</span>
-                <div id="category-filters" class="d-none d-sm-flex align-items-center justify-content-center gap-1 flex-grow-1 overflow-x-auto">
+                <span class="navbar-brand mb-0 h6 me-auto flex-shrink-0">
+                    <a href="/" class="d-flex align-items-center gap-2 text-decoration-none">
+                        <svg class="img-fluid d-block" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" style="height: 45px;">
+
+                            <!-- Transparent background -->
+                            <rect width="512" height="512" fill="none" />
+
+                            <!-- Board container -->
+                            <rect x="64" y="96" width="384" height="320" rx="24" stroke="#FFFFFF" stroke-width="16" />
+
+                            <!-- Columns (Kanban lanes) -->
+                            <rect x="104" y="136" width="80" height="240" rx="12" fill="#FFFFFF" opacity="0.15" />
+                            <rect x="216" y="136" width="80" height="240" rx="12" fill="#FFFFFF" opacity="0.35" />
+                            <rect x="328" y="136" width="80" height="240" rx="12" fill="#FFFFFF" opacity="0.7" />
+
+                            <!-- Task cards -->
+                            <rect x="116" y="160" width="56" height="28" rx="6" fill="#FFFFFF" />
+                            <rect x="116" y="200" width="56" height="28" rx="6" fill="#FFFFFF" />
+
+                            <rect x="228" y="160" width="56" height="28" rx="6" fill="#FFFFFF" />
+                            <rect x="228" y="200" width="56" height="28" rx="6" fill="#FFFFFF" />
+                            <rect x="228" y="240" width="56" height="28" rx="6" fill="#FFFFFF" />
+
+                            <rect x="340" y="160" width="56" height="28" rx="6" fill="#FFFFFF" />
+                            <rect x="340" y="200" width="56" height="28" rx="6" fill="#FFFFFF" />
+
+                            <!-- Checkmark (completion indicator) -->
+                            <path d="M348 300 L370 322 L408 278" stroke="#FFFFFF" stroke-width="12"
+                                stroke-linecap="round" stroke-linejoin="round" />
+
+                        </svg>
+                    </a>
+                </span>
+                <div id="category-filters"
+                    class="d-none d-sm-flex align-items-center justify-content-center gap-1 flex-grow-1 overflow-x-auto">
                     <button class="btn btn-sm btn-outline-light active flex-shrink-0" data-filter="all">All</button>
                     <!-- Category pills injected here -->
                 </div>
@@ -93,7 +142,9 @@
                     <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
                     <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
                 </div>
-                <button class="navbar-toggler border-0 p-1 ms-2 d-sm-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarActions" aria-controls="navbarActions" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler border-0 p-1 ms-2 d-sm-none" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarActions" aria-controls="navbarActions" aria-expanded="false"
+                    aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
             </div>
@@ -112,7 +163,7 @@
     </nav>
 
     {{-- Main Board --}}
-    <main class="container-fluid mt-2">
+    <main class="container-fluid">
         <div id="kanban-board" class="d-flex gap-3 overflow-x-auto py-2">
             <div class="kanban-column" data-column="new">
                 <div class="column-header d-flex justify-content-between align-items-center mb-3">
@@ -166,7 +217,8 @@
                         <input type="hidden" id="task-parent-id" name="parent_id" value="">
                         <div class="mb-3">
                             <label class="form-label">Title</label>
-                            <input type="text" name="title" class="form-control bg-dark text-light border-secondary" required>
+                            <input type="text" name="title" class="form-control bg-dark text-light border-secondary"
+                                required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Description</label>
@@ -185,7 +237,8 @@
                         <div class="row" id="categoryGroup">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Category</label>
-                                <select name="category_id" id="categorySelect" class="form-select bg-dark text-light border-secondary" required>
+                                <select name="category_id" id="categorySelect"
+                                    class="form-select bg-dark text-light border-secondary" required>
                                     <option value="" disabled selected>— select category —</option>
                                 </select>
                             </div>
@@ -193,7 +246,8 @@
                         <div class="row" id="dueDateGroup">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Due Date</label>
-                                <input type="text" name="due_date" class="form-control bg-dark text-light border-secondary datepicker">
+                                <input type="text" name="due_date"
+                                    class="form-control bg-dark text-light border-secondary datepicker">
                             </div>
                         </div>
                         <div class="row" id="taskColumnGroup">
@@ -211,7 +265,8 @@
                         <div class="row" id="parentTaskGroup">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Parent Task</label>
-                                <select name="parent_id" id="parentTaskSelect" class="form-select bg-dark text-light border-secondary">
+                                <select name="parent_id" id="parentTaskSelect"
+                                    class="form-select bg-dark text-light border-secondary">
                                     <option value="">— none —</option>
                                 </select>
                             </div>
@@ -221,24 +276,29 @@
                             <div class="row">
                                 <div class="col-md-6 mb-2">
                                     <label class="small">Reminder At</label>
-                                    <input type="text" name="reminder_at" class="form-control form-control-sm bg-dark text-light border-secondary datepicker">
+                                    <input type="text" name="reminder_at"
+                                        class="form-control form-control-sm bg-dark text-light border-secondary datepicker">
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="small">Priority (-2 to 2)</label>
-                                    <input type="number" name="pushover_priority" class="form-control form-control-sm bg-dark text-light border-secondary" value="0" min="-2" max="2">
+                                    <input type="number" name="pushover_priority"
+                                        class="form-control form-control-sm bg-dark text-light border-secondary"
+                                        value="0" min="-2" max="2">
                                 </div>
                             </div>
                         </div>
                         <div class="mb-3 p-3 bg-dark border border-secondary rounded">
                             <div class="d-flex align-items-center mb-2">
                                 <input class="form-check-input me-2" type="checkbox" id="repeatTask">
-                                <label class="form-check-label fw-semibold" for="repeatTask">&#x1F501; Repeat this task</label>
+                                <label class="form-check-label fw-semibold" for="repeatTask">&#x1F501; Repeat this
+                                    task</label>
                             </div>
                             <div id="recurrenceFields" style="display:none">
                                 <div class="row">
                                     <div class="col-md-6 mb-2">
                                         <label class="small">Repeat</label>
-                                        <select id="recurrencePattern" class="form-select form-select-sm bg-dark text-light border-secondary">
+                                        <select id="recurrencePattern"
+                                            class="form-select form-select-sm bg-dark text-light border-secondary">
                                             <option value="daily">Daily</option>
                                             <option value="every_other_day">Every other day</option>
                                             <option value="weekly" selected>Weekly</option>
@@ -248,36 +308,50 @@
                                     </div>
                                     <div class="col-md-6 mb-2">
                                         <label class="small">Every <span id="intervalLabel">week(s)</span></label>
-                                        <input type="number" id="recurrenceInterval" class="form-control form-control-sm bg-dark text-light border-secondary" value="1" min="1" max="99">
+                                        <input type="number" id="recurrenceInterval"
+                                            class="form-control form-control-sm bg-dark text-light border-secondary"
+                                            value="1" min="1" max="99">
                                     </div>
                                 </div>
                                 <div id="weekdaySelector" class="mb-2">
                                     <label class="small d-block mb-1">On these days:</label>
                                     <div class="d-flex gap-1">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="MO">M</button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="TU">T</button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="WE">W</button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="TH">T</button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="FR">F</button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="SA">S</button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn" data-day="SU">S</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn"
+                                            data-day="MO">M</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn"
+                                            data-day="TU">T</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn"
+                                            data-day="WE">W</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn"
+                                            data-day="TH">T</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn"
+                                            data-day="FR">F</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn"
+                                            data-day="SA">S</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary weekday-btn"
+                                            data-day="SU">S</button>
                                     </div>
                                 </div>
                                 <div class="mb-2">
                                     <label class="small d-block mb-1">End</label>
                                     <div class="d-flex gap-3 align-items-center flex-wrap">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="recurrenceEnd" id="endNever" value="never" checked>
+                                            <input class="form-check-input" type="radio" name="recurrenceEnd"
+                                                id="endNever" value="never" checked>
                                             <label class="form-check-label small" for="endNever">Never</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="recurrenceEnd" id="endOnDate" value="on_date">
+                                            <input class="form-check-input" type="radio" name="recurrenceEnd"
+                                                id="endOnDate" value="on_date">
                                             <label class="form-check-label small" for="endOnDate">On date</label>
                                         </div>
-                                        <input type="text" id="recurrenceEndDate" class="form-control form-control-sm bg-dark text-light border-secondary datepicker" style="display:none; width:auto">
+                                        <input type="text" id="recurrenceEndDate"
+                                            class="form-control form-control-sm bg-dark text-light border-secondary datepicker"
+                                            style="display:none; width:auto">
                                     </div>
                                 </div>
-                                <div id="recurrencePreview" class="small text-info p-2 border border-secondary rounded" style="display:none"></div>
+                                <div id="recurrencePreview" class="small text-info p-2 border border-secondary rounded"
+                                    style="display:none"></div>
                             </div>
                         </div>
                     </form>
@@ -304,10 +378,12 @@
                     <h6>Add New Category</h6>
                     <div class="row g-2">
                         <div class="col-8">
-                            <input type="text" id="newCatName" class="form-control bg-dark text-light border-secondary" placeholder="Category Name">
+                            <input type="text" id="newCatName" class="form-control bg-dark text-light border-secondary"
+                                placeholder="Category Name">
                         </div>
                         <div class="col-4">
-                            <input type="color" id="newCatColor" class="form-control form-control-color bg-dark border-secondary" value="#6c757d">
+                            <input type="color" id="newCatColor"
+                                class="form-control form-control-color bg-dark border-secondary" value="#6c757d">
                         </div>
                     </div>
                 </div>
@@ -346,4 +422,5 @@
     </script>
     <script src="/assets/js/app.js?v={{ filemtime(public_path('assets/js/app.js')) }}"></script>
 </body>
+
 </html>
