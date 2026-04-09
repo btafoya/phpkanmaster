@@ -28,69 +28,6 @@
 
     {{-- Custom CSS --}}
     <link href="/assets/css/app.css?v={{ filemtime(public_path('assets/css/app.css')) }}" rel="stylesheet">
-
-    <style>
-        .kanban-column {
-            flex: 1;
-            min-width: 250px;
-            max-width: 400px;
-            background: #1a1d23;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            height: calc(100vh - 150px);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .task-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            min-height: 100px;
-        }
-
-        .ui-state-highlight {
-            height: 100px;
-            background: rgba(255, 255, 255, 0.1) !important;
-            border: 2px dashed #444;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .task-card {
-            cursor: grab;
-            transition: transform 0.1s;
-        }
-
-        .task-card:active {
-            cursor: grabbing;
-            transform: scale(0.98);
-        }
-
-        /* Mobile: single column stack */
-        @media (max-width: 575.98px) {
-            .kanban-column {
-                flex: none;
-                min-width: 100%;
-                max-width: 100%;
-                height: auto;
-                max-height: calc(100vh - 200px);
-            }
-
-            #kanban-board {
-                flex-direction: column;
-                gap: 1rem;
-            }
-        }
-
-        /* Touch-friendly drag and drop */
-        .task-list {
-            touch-action: pan-y;
-        }
-
-        .task-card {
-            touch-action: none;
-        }
-    </style>
 </head>
 
 <body>
@@ -99,7 +36,7 @@
         <div class="container-fluid p-0">
             <div class="d-flex align-items-center w-100">
                 <span class="navbar-brand mb-0 h6 me-auto flex-shrink-0">
-                    <a href="/" class="d-flex align-items-center gap-2 text-decoration-none">
+                    <a href="/" class="d-flex align-items-center gap-2 text-decoration-none" aria-label="Home" alt="Home">
                         <svg class="img-fluid d-block" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"
                             fill="none" style="height: 45px;">
 
