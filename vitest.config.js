@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/js/**/*.test.js'],
-    globalSetup: './tests/js/globalSetup.js',
-    globalTeardown: './tests/js/globalTeardown.js',
+    // globalSetup/globalTeardown only needed for integration tests that need a live DB
+    // board.test.js tests pure functions and doesn't need them
   },
 });
