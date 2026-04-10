@@ -223,6 +223,14 @@ App.Board = {
             $(`#list-${parent.task_column}`).append(card);
         });
 
+        // Render child (subtask) cards in their respective columns
+        filteredTasks.filter(t => t.parent_id).forEach(child => {
+            const parent = tasks.find(t => t.id === child.parent_id);
+            const category = parent ? categoryMap[parent.category_id] : null;
+            const card = this.createChildCard(child, parent, category);
+            $(`#list-${child.task_column}`).append(card);
+        });
+
         this.updateCounts();
     },
 
@@ -321,6 +329,47 @@ App.Board = {
             summary.classList.remove('fa-chevron-up');
             summary.classList.add('fa-chevron-down');
         }
+    },
+
+    createChildCard(child, parent, category) {
+        const priorityClass = `priority-${child.priority || 'low'}`;
+        const isDone = child.task_column === 'done';
+        const doneClass = isDone ? 'text-muted text-decoration-line-through' : '';
+        const borderStyle = category ? `style="border-left-color: ${category.color}"` : '';
+
+        const categoryBadge = category
+            ? `<span class="badge me-1" style="background-color: ${category.color}; font-size:0.6rem">${category.name}</span>`
+            : '';
+
+        const parentLabel = parent
+            ? `<div class="small text-muted mb-1"><i class="fas fa-level-up-alt me-1" style="font-size:0.6rem;transform:rotate(90deg)"></i>Subtask of: ${parent.title}</div>`
+            : '';
+
+        const dueDate = child.due_date ? `<div class="small text-muted"><i class="far fa-calendar-alt"></i> ${child.due_date}</div>` : '';
+
+        return $(`
+            <div class="card mb-2 task-card card-task child-card ${priorityClass} shadow-sm" data-id="${child.id}" data-is-child="true" ${borderStyle}>
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                            ${categoryBadge}
+                            <span class="${doneClass}">${isDone ? '●' : '○'}</span>
+                            ${parentLabel}
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-outline-info btn-sm px-1 py-0" data-action="view" title="View subtask" style="font-size:0.65rem"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-outline-secondary btn-sm px-1 py-0" data-action="edit" title="Edit subtask" style="font-size:0.65rem"><i class="fas fa-pen"></i></button>
+                            <button class="btn btn-outline-danger btn-sm px-1 py-0" data-action="delete" title="Delete subtask" style="font-size:0.65rem"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <h6 class="card-title mb-1 ${doneClass}" style="font-size:0.85rem">${child.title}</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        ${dueDate}
+                        <span class="badge bg-light text-dark border" style="font-size:0.6rem">${child.priority}</span>
+                    </div>
+                </div>
+            </div>
+        `);
     },
 
     toggleChildComplete(childId, currentColumn) {
