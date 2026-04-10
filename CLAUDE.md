@@ -19,7 +19,7 @@ phpKanMaster is a single-user personal Kanban task manager. The entire stack run
 
 Adhere to the following guidelines when using tools:
 
-- Always use a **Research-First approach**: Before using any tool, conduct thorough research to understand the context and requirements. This ensures that you use the most appropriate tool for the task at hand. Never use an Edit-First approach. You should prefer making surgical edits to the codebase instead of rewriting whole files or doing large, sweeping changes.
+- Always use a **Research-First approach**: Before using any tool, conduct thorough research to understand the context and requirements. This ensures you use the most appropriate tool for the task at hand. Never use an Edit-First approach. You should prefer making surgical edits to the codebase instead of rewriting whole files or doing large, sweeping changes.
 - Use **Reasoning Loops** very frequently. Don't be lazy and skip them. Reasoning loops are essential for ensuring the quality and accuracy of your work.
 
 ### Thinking Depth
@@ -33,6 +33,7 @@ Never reason from assumptions, always reason from the actual data. You need to r
 ## Critical Rules
 
 ### Never
+
 - Concatenate user input into SQL queries
 - Commit `.env`, credentials, API keys, or tokens
 - Auto-deploy to production without explicit approval
@@ -49,36 +50,43 @@ Never reason from assumptions, always reason from the actual data. You need to r
 - Commit as author: **btafoya** — no AI attribution in messages
 - Follow `.claude/skills/*/SKILL.md` for quality standards
 
-## Commands
+## Available Skills
+
+Use these skills when relevant to the task at hand:
+
+| Skill | When to Use | Path |
+|-------|-------------|
+| `jquery` | jQuery DOM manipulation, events, AJAX, animations (project uses jQuery 4.0) | .claude/skills/jquery/ |
+| `bootstrap-overview` | Bootstrap 5 setup, components, accessibility | .claude/skills/bootstrap-overview/ |
+| `bootstrap-components` | Bootstrap 5 component details and usage | .claude/skills/bootstrap-components |
+| `bootstrap-layout` | Bootstrap 5 grid and layout system | .claude/skills/bootstrap-layout |
+| `pwa-expert` | Service worker, PWA features, offline support | .claude/skills/pwa-expert |
+| `launch-readiness-auditor` | Pre-launch quality and completeness audit | .claude/skills/launch-readiness-auditor |
+| `graphify` | Knowledge graph for codebase architecture questions |
+
+### Laravel Plugin Skills (`.claude/plugins/superpowers-laravel/`)
+
+When working with Laravel components:
+
+| Skill | When to Use |
+|-------|-------------|
+| `/laravel:queues-jobs` | Queue jobs, workers, job dispatching |
+| `/laravel:observer-pattern` | Model observers and events |
+| `/laravel:service-providers` | Service provider architecture |
+| `/laravel:quality-checks` | Code quality and testing patterns |
+| `/laravel:livewire` | Livewire component development |
+| `/laravel:middleware` | HTTP middleware creation |
+| `/laravel:api-resources` | API resource transformers |
+| `/laravel:policies-gates` | Authorization policies and gates |
+| `/laravel:bootstrap-check` | Laravel bootstrap process |
+
+## Common Commands
 
 All commands run inside Docker unless otherwise noted.
 
 ```bash
 # Start/stop stack
-docker co## Claude Code Behaviour Guidelines
-
-- Avoid ownership-dodging behaviour: if you encounter an issue, take responsibility for it and work towards a solution instead of passing it on to someone else. Don't say things like "not caused by my changes" or say that it's "a pre-existing issue". Instead, acknowledge the problem and take initiative to fix it. Also, don't give up with excuses like "known limitation" and don't mark it for "future work".
-- Avoid premature stopping: if you encounter a problem, don't stop at the first obstacle. Instead, keep pushing forward and find a way to overcome it. Don't say things like "good stopping point" or "natural checkpoint". Instead, keep going until you have a complete solution.
-- Avoid permission-seeking behaviour: if you have the knowledge and capability to solve a problem, push through. Don't say things like "should I continue?" or "want me to keep going?". Instead, take initiative and act towards the solution.
-- Do plan multi-step approaches before acting (plan which files to read and in what order, which tools to use, etc).
-- Do recall and apply project-specific conventions from CLAUDE.md files.
-- Do catch your own mistakes by applying reasoning loops and self-checks, and fix them before committing or asking for help.
-
-### Use of tools
-
-Adhere to the following guidelines when using tools:
-
-- Always use a **Research-First approach**: Before using any tool, conduct thorough research to understand the context and requirements. This ensures that you use the most appropriate tool for the task at hand. Never use an Edit-First approach. You should prefer making surgical edits to the codebase instead of rewriting whole files or doing large, sweeping changes.
-- Use **Reasoning Loops** very frequently. Don't be lazy and skip them. Reasoning loops are essential for ensuring the quality and accuracy of your work.
-
-### Thinking Depth
-
-When working on tasks that require complex problem-solving, always apply the highest **level of thinking depth**.
-
-When thinking is shallow, the model outputs to the cheapest action available. We don't want that. We don't mind consuming more tokens if it means a better output. So always apply the highest level of thinking depth.
-
-Never reason from assumptions, always reason from the actual data. You need to read and understand the actual code, publication or documentation in order to make informed decisions. Don't rely on assumptions or guesses, as they can lead to mistakes and misunderstandings.
-mpose up -d --build
+docker compose up -d --build
 docker compose down
 
 # Laravel artisan
@@ -105,14 +113,15 @@ npm run build   # production build
 docker compose logs -f app
 docker compose logs -f caddy
 
-# Local url
-http://localhost:8181/
-```
-
-Generate a bcrypt password hash for `.env`:
-```bash
+# Generate a bcrypt password hash for `.env`:
 php -r "echo password_hash('your_password', PASSWORD_BCRYPT);"
 ```
+
+## Local url
+
+<http://localhost:8181/>
+
+## Database migration files go in the Laravel migration database/migrations/ folder, NOT docker/db/init/
 
 ## Architecture
 
@@ -129,6 +138,7 @@ Browser → Caddy :80
 ### Authentication
 
 Laravel uses a custom single-user auth driver, not Eloquent:
+
 - `app/Auth/SingleUser.php` — implements `Authenticatable`, identity is just the username string
 - `app/Auth/SingleUserProvider.php` — validates against `APP_USER` / `APP_PASSWORD_HASH` from `.env`
 - `app/Providers/SingleUserAuthServiceProvider.php` — registers the `single-user` driver
@@ -144,6 +154,7 @@ There is no user database table involved in authentication.
 `window.POSTGREST_URL` is set inline from `env('PGRST_BASE_URL', '/api')` so the JS knows the API base URL.
 
 `public/assets/js/app.js` is the entire frontend, structured as a single `window.App` object with namespaces:
+
 - `App.Api` — PostgREST fetch wrappers (tasks, categories, task_files)
 - `App.Board` — renders columns, task cards, category filters
 - `App.DnD` — jQuery UI Sortable drag-and-drop, syncs `task_column`/`position` via PATCH
@@ -155,6 +166,7 @@ CDN libraries loaded in `kanban.blade.php`: Bootstrap 5.3, jQuery 4.0, jQuery UI
 ### Database Schema (PostgreSQL)
 
 Tables in the `public` schema (managed outside Laravel migrations — see `docker/db/init/`):
+
 - `tasks` — columns: `id`, `title`, `description`, `task_column` (enum: new/in_progress/review/on_hold/done), `priority` (low/medium/high), `position`, `category_id`, `due_date`, `reminder_at`, `pushover_priority`
 - `categories` — `id`, `name`, `color`
 - `task_files` — `id`, `task_id`, `filename`, `content` (base64)
@@ -166,6 +178,7 @@ Laravel's own migrations only create `users`, `cache`, and `jobs` tables (unused
 ### Environment Variables
 
 Key variables in `.env`:
+
 | Variable | Purpose |
 |---|---|
 | `APP_USER` | Login username |
@@ -184,6 +197,7 @@ Tests use in-memory SQLite (`phpunit.xml`), not PostgreSQL. The custom `SingleUs
 This project has a graphify knowledge graph at graphify-out/.
 
 Rules:
+
 - Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
 - If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
 - After modifying code files in this session, run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` to keep the graph current

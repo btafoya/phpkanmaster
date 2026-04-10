@@ -394,6 +394,8 @@ App.Modal = {
             form.reset();
             $('#summernote').summernote('code', '');
 
+            const isView = mode === 'view';
+
             // Populate categories
             const categories = await App.Api.getCategories();
             const $select = $('#categorySelect').empty();
@@ -428,46 +430,97 @@ App.Modal = {
             this._hideNoteEditor();
             $('#notesList').empty();
 
-            // In view mode, hide form fields and show Edit button; in edit mode show Save
-            const isView = mode === 'view';
+            // Footer buttons
+            $('#closeTaskBtn').toggleClass('d-none', !isView);
             $('#saveTaskBtn').toggleClass('d-none', isView);
             $('#editTaskBtn').toggleClass('d-none', !isView);
-            // Make all form inputs read-only in view mode
-            $('#taskForm input, #taskForm select, #taskForm textarea').prop('readonly', isView);
-            $('#summernote').summernote(isView ? 'disable' : 'enable');
 
             if (taskId) {
                 const task = await App.Api.request(`/tasks?id=eq.${taskId}&select=*`);
                 const data = task[0];
 
-                $('#taskModalTitle').text(isView ? 'View Task' : 'Edit Task');
-                $(form).find('[name="id"]').val(data.id);
-                $(form).find('[name="title"]').val(data.title);
-                $('#summernote').summernote('code', data.description || '');
-                $(form).find('[name="priority"]').val(data.priority);
-                $(form).find('[name="category_id"]').val(data.category_id);
-                $(form).find('[name="due_date"]').val(data.due_date);
-                $(form).find('[name="task_column"]').val(data.task_column);
-                $(form).find('[name="reminder_at"]').val(data.reminder_at);
-                $(form).find('[name="pushover_priority"]').val(data.pushover_priority);
-                $(form).find('[name="parent_id"]').val(data.parent_id || '');
+                if (isView) {
+                    // Populate read-only view content
+                    $('#taskModalTitle').text('Task Details');
+                    $('#viewTitle').text(data.title);
+                    $('#viewDescription').html(data.description || '<em class="text-secondary">No description</em>');
 
-                // Load recurrence rule if present
-                const rule = await App.Api.getRecurrenceRuleForTask(taskId);
-                if (rule && rule.active) {
-                    App.Recurrence._currentRuleId = rule.id;
-                    App.Recurrence._loadRule(rule);
+                    // Notes (read-only list)
+                    const notes = await App.Api.getNotesForTask(taskId);
+                    this._renderViewNotesList(notes);
+
+                    // Priority badge
+                    const priorityColors = { low: 'bg-success', medium: 'bg-warning', high: 'bg-danger' };
+                    $('#viewPriority').removeClass().addClass('badge ' + (priorityColors[data.priority] || 'bg-secondary')).text(data.priority);
+
+                    // Category badge with color
+                    const cat = categories.find(c => c.id === data.category_id);
+                    if (cat) {
+                        $('#viewCategory').html(`<span class="badge" style="background:${cat.color}">${cat.name}</span>`);
+                    } else {
+                        $('#viewCategory').html('<span class="text-secondary">—</span>');
+                    }
+
+                    // Due date formatted
+                    $('#viewDueDate').text(data.due_date ? new Date(data.due_date).toLocaleDateString() : '—');
+
+                    // Column badge
+                    const columnLabels = { new: 'New', in_progress: 'In Progress', review: 'Review', on_hold: 'On Hold', done: 'Done' };
+                    $('#viewColumn').removeClass().addClass('badge bg-primary').text(columnLabels[data.task_column] || data.task_column);
+
+                    // Parent task title
+                    if (data.parent_id) {
+                        const parent = allTasks.find(t => t.id === data.parent_id);
+                        $('#viewParentTask').text(parent ? parent.title : '—');
+                    } else {
+                        $('#viewParentTask').text('—');
+                    }
+
+                    // Reminder at and pushover priority
+                    $('#viewReminderAt').text(data.reminder_at ? new Date(data.reminder_at).toLocaleString() : '—');
+                    $('#viewPushoverPriority').text(data.pushover_priority ?? 0);
+
+                    // Files as download links
+                    const files = await App.Api.getFilesForTask(taskId);
+                    this._renderViewFileList(files);
+
+                    // Recurrence human-readable & form pre-fill
+                    const rule = await App.Api.getRecurrenceRuleForTask(taskId);
+                    $('#viewRecurrence').text(rule ? App.Recurrence.humanReadable(rule.rrule) : 'No recurrence');
+
+                    // Show view, hide form
+                    $('#taskForm').addClass('d-none');
+                    $('#taskViewContent').removeClass('d-none');
+                    $('#taskFilesInput').closest('.mb-3').addClass('d-none');
+                    $('#fileAttachmentSection').addClass('d-none');
+
+                    // Also populate form fields so Edit mode has data ready
+                    $(form).find('[name="id"]').val(data.id);
+                    $(form).find('[name="title"]').val(data.title);
+                    $('#summernote').summernote('code', data.description || '');
+                    $(form).find('[name="priority"]').val(data.priority);
+                    $(form).find('[name="category_id"]').val(data.category_id);
+                    $(form).find('[name="due_date"]').val(data.due_date);
+                    $(form).find('[name="task_column"]').val(data.task_column);
+                    $(form).find('[name="reminder_at"]').val(data.reminder_at);
+                    $(form).find('[name="pushover_priority"]').val(data.pushover_priority);
+                    $(form).find('[name="parent_id"]').val(data.parent_id || '');
+
+                    // Load recurrence rule into form for Edit mode
+                    if (rule && rule.active) {
+                        App.Recurrence._currentRuleId = rule.id;
+                        App.Recurrence._loadRule(rule);
+                    }
                 }
-
-                // Load existing files for this task
-                const files = await App.Api.getFilesForTask(taskId);
-                this._renderFileList(files);
-
-                // Load existing notes for this task
-                await this._loadNotes(taskId);
             } else {
+                // Add Task — never in view mode
                 $('#taskModalTitle').text('Add Task');
                 $(form).find('[name="id"]').val('');
+                $('#taskForm').removeClass('d-none');
+                $('#taskViewContent').addClass('d-none');
+                $('#addNoteBtn').closest('.mb-3').removeClass('d-none');
+                $('#taskFilesInput').closest('.mb-3').removeClass('d-none');
+                $('#fileAttachmentSection').removeClass('d-none');
             }
 
             // Reset subtask state
@@ -673,13 +726,13 @@ App.Modal = {
             input.value = '';
         },
 
-        async _loadNotes(taskId) {
+        async _loadNotes(taskId, targetSelector = '#notesList') {
             const notes = await App.Api.getNotesForTask(taskId);
-            this._renderNotesList(notes);
+            this._renderNotesList(notes, targetSelector);
         },
 
-        _renderNotesList(notes) {
-            const $list = $('#notesList').empty();
+        _renderNotesList(notes, targetSelector = '#notesList') {
+            const $list = $(targetSelector).empty();
             notes.forEach(note => {
                 const date = new Date(note.created_at);
                 const timeStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
@@ -718,6 +771,76 @@ App.Modal = {
                     $(e.currentTarget).closest('[data-id]').remove();
                 } catch (err) {
                     App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to delete note' });
+                }
+            });
+        },
+
+        _renderViewNotesList(notes) {
+            const $list = $('#viewNotesList').empty();
+            if (notes.length === 0) {
+                $list.html('<em class="text-secondary small">No notes</em>');
+                return;
+            }
+            notes.forEach(note => {
+                const date = new Date(note.created_at);
+                const timeStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
+                    ' at ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                $list.append(`
+                    <div class="px-3 py-2 bg-dark border border-secondary rounded">
+                        <div class="note-content small text-light">${note.content}</div>
+                        <div class="note-time small text-secondary mt-1">${timeStr}</div>
+                    </div>
+                `);
+            });
+        },
+
+        _renderViewFileList(files) {
+            const $list = $('#viewFileList').empty();
+            if (files.length === 0) {
+                $list.html('<em class="text-secondary small">No attachments</em>');
+                return;
+            }
+            files.forEach(file => {
+                const isImage = file.mime_type && file.mime_type.startsWith('image/');
+                const icon = isImage
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/></svg>`
+                    : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></svg>`;
+                $list.append(`
+                    <a href="#" class="d-flex align-items-center gap-2 px-2 py-1 bg-dark border border-secondary rounded text-decoration-none view-file-download"
+                       data-file-id="${file.id}"
+                       data-filename="${file.filename}"
+                       data-mime-type="${file.mime_type || 'application/octet-stream'}">
+                        <span class="text-info">${icon}</span>
+                        <span class="small text-light text-truncate" style="max-width:150px">${file.filename}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16" class="text-success"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                    </a>
+                `);
+            });
+
+            // Wire up download click handlers
+            $list.find('.view-file-download').on('click', async function(e) {
+                e.preventDefault();
+                const fileId = $(this).data('file-id');
+                const filename = $(this).data('filename');
+                const mimeType = $(this).data('mime-type');
+                try {
+                    const [fileData] = await App.Api.request(`/task_files?id=eq.${fileId}&select=data`);
+                    if (!fileData || !fileData.data) return;
+                    // Decode base64 to binary
+                    const binary = atob(fileData.data);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                    const blob = new Blob([bytes], { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (err) {
+                    App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to download file' });
                 }
             });
         },
@@ -772,7 +895,13 @@ App.Modal = {
                     await App.Api.createNote({ task_id: taskId, content });
                 }
                 this._hideNoteEditor();
-                await this._loadNotes(taskId);
+                // Refresh the correct notes list based on current mode
+                if ($('#taskViewContent').is(':visible')) {
+                    const notes = await App.Api.getNotesForTask(taskId);
+                    this._renderViewNotesList(notes);
+                } else {
+                    await this._loadNotes(taskId);
+                }
                 App.Alerts.Toast.fire({ icon: 'success', title: this._editingNoteId ? 'Note updated' : 'Note added' });
             } catch (err) {
                 App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to save note' });
@@ -1028,7 +1157,7 @@ App.Recurrence = {
         $('#recurrenceEndDate').on('change', () => App.Recurrence._updatePreview());
 
         // Note editor bindings
-        $('#addNoteBtn').on('click', () => {
+        $('#addNoteBtn, #addNoteBtnView').on('click', () => {
             App.Modal.Task._showNoteEditor();
         });
 
@@ -1122,15 +1251,25 @@ $(document).on('click', '[data-action="add-subtask"]', function(e) {
 
 $('#saveTaskBtn').on('click', () => App.Modal.Task.save());
 
-$('#editTaskBtn').on('click', function() {
+$('#editTaskBtn').on('click', async function() {
     const taskId = $('[name="id"]').val();
     if (!taskId) return;
     // Switch from view to edit mode
+    $('#taskViewContent').addClass('d-none');
+    $('#taskForm').removeClass('d-none');
     $('#saveTaskBtn').removeClass('d-none');
+    $('#closeTaskBtn').addClass('d-none');
     $(this).addClass('d-none');
     $('#taskForm input, #taskForm select, #taskForm textarea').prop('readonly', false);
     $('#summernote').summernote('enable');
+    $('#addNoteBtn').closest('.mb-3').removeClass('d-none');
+    $('#taskFilesInput').closest('.mb-3').removeClass('d-none');
+    $('#fileAttachmentSection').removeClass('d-none');
     $('#taskModalTitle').text('Edit Task');
+    // Load notes and files into edit containers
+    await App.Modal.Task._loadNotes(taskId);
+    const files = await App.Api.getFilesForTask(taskId);
+    App.Modal.Task._renderFileList(files);
 });
 
 // Category event handlers

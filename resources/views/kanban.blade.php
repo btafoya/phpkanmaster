@@ -202,13 +202,6 @@
                                 </button>
                             </div>
                             <div id="notesList" class="mb-2 d-flex flex-column gap-2" style="max-height:200px;overflow-y:auto;"></div>
-                            <div id="noteEditor" class="d-none">
-                                <div name="noteContent" id="noteSummernote"></div>
-                                <div class="d-flex gap-2 mt-2">
-                                    <button type="button" class="btn btn-sm btn-primary" id="saveNoteBtn">Save note</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelNoteBtn">Cancel</button>
-                                </div>
-                            </div>
                         </div>
                         <div class="row" id="priorityGroup">
                             <div class="col-md-6 mb-3">
@@ -346,11 +339,89 @@
                             </div>
                         </div>
                     </form>
+                    <div id="noteEditor" class="d-none mb-3">
+                        <div name="noteContent" id="noteSummernote"></div>
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-sm btn-primary" id="saveNoteBtn">Save note</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelNoteBtn">Cancel</button>
+                        </div>
+                    </div>
+                    {{-- Read-only view content (shown in view mode) --}}
+                    <div id="taskViewContent" class="d-none">
+                        <h4 id="viewTitle" class="mb-3 text-light"></h4>
+
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small text-uppercase mb-1">Description</label>
+                            <div id="viewDescription" class="p-2 bg-dark border rounded text-light" style="min-height:60px"></div>
+                        </div>
+
+                        <div class="mb-3" id="viewNotesSection">
+                            <div class="d-flex align-items-center mb-2">
+                                <label class="form-label text-secondary small text-uppercase mb-0">Notes</label>
+                                <button type="button" class="btn btn-sm p-0 ms-auto text-info" id="addNoteBtnView" title="Add note">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+                                    Add note
+                                </button>
+                            </div>
+                            <div id="viewNotesList" class="d-flex flex-column gap-2" style="max-height:200px;overflow-y:auto;"></div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small text-uppercase mb-1">Priority</label>
+                                <div id="viewPriority" class="badge"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small text-uppercase mb-1">Category</label>
+                                <div id="viewCategory"></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small text-uppercase mb-1">Due Date</label>
+                                <div id="viewDueDate" class="text-light"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small text-uppercase mb-1">Column</label>
+                                <div id="viewColumn" class="badge bg-primary"></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small text-uppercase mb-1">Parent Task</label>
+                                <div id="viewParentTask" class="text-light"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 p-3 bg-dark border border-secondary rounded">
+                            <label class="form-label text-secondary small text-uppercase mb-2">Notifications</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="small text-secondary d-block">Reminder At</label>
+                                    <div id="viewReminderAt" class="text-light"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small text-secondary d-block">Priority</label>
+                                    <div id="viewPushoverPriority" class="text-light"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="viewAttachmentsSection">
+                            <label class="form-label text-secondary small text-uppercase mb-2">Attachments</label>
+                            <div id="viewFileList" class="d-flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <div class="mb-3" id="viewRecurrenceSection">
+                            <label class="form-label text-secondary small text-uppercase mb-1">Recurrence</label>
+                            <div id="viewRecurrence" class="text-info"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" id="saveTaskBtn" class="btn btn-primary d-none">Save Task</button>
+                    <button type="button" id="closeTaskBtn" class="btn btn-secondary" data-bs-dismiss="modal">Close Window</button>
                     <button type="button" id="editTaskBtn" class="btn btn-primary">Edit Task</button>
+                    <button type="button" id="saveTaskBtn" class="btn btn-primary d-none">Save Task</button>
                 </div>
             </div>
         </div>

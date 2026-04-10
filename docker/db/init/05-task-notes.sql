@@ -1,9 +1,3 @@
 -- docker/db/init/05-task-notes.sql
-
-create table task_notes (
-    id         uuid primary key default gen_random_uuid(),
-    task_id    uuid references tasks(id) on delete cascade,
-    content    text not null,
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now()
-);
+-- task_notes table created via Laravel migration (database/migrations/2026_04_09_090001_create_task_notes_table.php)
+-- Permissions granted in 03-permissions.sql
