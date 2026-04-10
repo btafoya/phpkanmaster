@@ -1247,8 +1247,8 @@ $(document).on('click', '[data-action="view"]', function(e) {
 
 $(document).on('click', '[data-action="edit"]', function(e) {
     e.preventDefault();
-    const id = $(this).closest('.task-card').data('id');
-    App.Modal.Task.open(id);
+    const taskId = $(this).closest('.task-card').data('id');
+    App.Modal.Task.open(taskId);
 });
 
 $(document).on('click', '[data-action="delete"]', async function(e) {

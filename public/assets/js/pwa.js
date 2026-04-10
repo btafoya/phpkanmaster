@@ -91,7 +91,7 @@ App.PWA = {
                 engageEvents.forEach(ev => document.removeEventListener(ev, showOnce));
             }
         };
-        engageEvents.forEach(ev => document.addEventListener(ev, showOnce, { once: true });
+        engageEvents.forEach(ev => document.addEventListener(ev, showOnce, { once: true }));
     },
 
     showIOSInstallHint() {
