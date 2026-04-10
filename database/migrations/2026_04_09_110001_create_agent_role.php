@@ -11,9 +11,6 @@ return new class extends Migration
             return;
         }
 
-        // Revoke from kanban_postgrest and drop view first, then drop role
-        DB::statement('REVOKE SELECT ON active_tasks_with_notes FROM agent');
-        DB::statement('REVOKE agent FROM kanban_postgrest');
         DB::statement('DROP ROLE IF EXISTS agent');
         DB::statement('CREATE ROLE agent NOLOGIN');
         DB::statement('GRANT agent TO kanban_postgrest');
@@ -26,8 +23,6 @@ return new class extends Migration
             return;
         }
 
-        DB::statement('REVOKE agent FROM kanban_postgrest');
-        DB::statement('REVOKE SELECT ON active_tasks_with_notes FROM agent');
         DB::statement('DROP ROLE IF EXISTS agent');
     }
 };
