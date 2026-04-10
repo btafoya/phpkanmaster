@@ -64,22 +64,6 @@ Use these skills when relevant to the task at hand:
 | `launch-readiness-auditor` | Pre-launch quality and completeness audit | .claude/skills/launch-readiness-auditor |
 | `graphify` | Knowledge graph for codebase architecture questions |
 
-### Laravel Plugin Skills (`.claude/plugins/superpowers-laravel/`)
-
-When working with Laravel components:
-
-| Skill | When to Use |
-|-------|-------------|
-| `/laravel:queues-jobs` | Queue jobs, workers, job dispatching |
-| `/laravel:observer-pattern` | Model observers and events |
-| `/laravel:service-providers` | Service provider architecture |
-| `/laravel:quality-checks` | Code quality and testing patterns |
-| `/laravel:livewire` | Livewire component development |
-| `/laravel:middleware` | HTTP middleware creation |
-| `/laravel:api-resources` | API resource transformers |
-| `/laravel:policies-gates` | Authorization policies and gates |
-| `/laravel:bootstrap-check` | Laravel bootstrap process |
-
 ## Common Commands
 
 All commands run inside Docker unless otherwise noted.
@@ -99,9 +83,9 @@ docker compose -f docker-compose.yml exec -w /var/www/html app composer update
 
 # Run tests (uses in-memory SQLite — does NOT require Docker)
 npm test                              # JS unit tests (Vitest)
-npm run test:phpunit                      # PHPUnit tests
+npm run test:phpunit                  # PHPUnit tests
 npm run test:phpstan                  # PHPStan static analysis
-npm run test:all                       # all three above, in sequence
+npm run test:all                      # all three above, in sequence
 php artisan test --filter TestName   # single PHPUnit test
 
 # Code style (Laravel Pint)
@@ -196,10 +180,4 @@ Tests use in-memory SQLite (`phpunit.xml`), not PostgreSQL. The custom `SingleUs
 
 ## graphify
 
-This project has a graphify knowledge graph at graphify-out/.
-
-Rules:
-
-- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
-- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- After modifying code files in this session, run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` to keep the graph current
+Knowledge graph at `graphify-out/`. Read `graphify-out/GRAPH_REPORT.md` before architecture questions. Run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` after code changes.
