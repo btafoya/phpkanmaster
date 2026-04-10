@@ -95,7 +95,7 @@ docker compose exec app php artisan cache:clear
 docker compose exec app php artisan tinker
 
 # Composer update
-docker compose -f docker-compose.yml exec -w /var/www/html app composer update 2>&1
+docker compose -f docker-compose.yml exec -w /var/www/html app composer update
 
 # Run tests (uses in-memory SQLite — does NOT require Docker)
 composer test                        # all tests
