@@ -1,4 +1,16 @@
 :80 {
+    # Agent token endpoint — goes to Laravel (not PostgREST)
+    handle /api/agent/token {
+        reverse_proxy app:9000 {
+            transport fastcgi {
+                root /var/www/html/public
+                env SCRIPT_NAME /index.php
+                env SCRIPT_FILENAME /var/www/html/public/index.php
+                env REQUEST_URI /api/agent/token
+            }
+        }
+    }
+
     # PostgREST API — strip /api prefix before forwarding
     handle /api/* {
         uri strip_prefix /api

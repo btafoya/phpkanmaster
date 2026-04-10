@@ -123,4 +123,12 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | JWT Secret for Agent Authentication
+    |--------------------------------------------------------------------------
+    */
+
+    'jwt_secret' => env('JWT_SECRET'),
+
 ];
