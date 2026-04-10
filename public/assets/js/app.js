@@ -278,7 +278,6 @@ App.Board = {
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-info btn-sm px-2" data-action="view" title="View task"><i class="fas fa-eye"></i></button>
-                            <button class="btn btn-outline-secondary btn-sm px-2" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
                             <button class="btn btn-outline-danger btn-sm px-2" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
@@ -358,7 +357,6 @@ App.Board = {
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-info btn-sm px-1 py-0" data-action="view" title="View subtask" style="font-size:0.65rem"><i class="fas fa-eye"></i></button>
-                            <button class="btn btn-outline-secondary btn-sm px-1 py-0" data-action="edit" title="Edit subtask" style="font-size:0.65rem"><i class="fas fa-pen"></i></button>
                             <button class="btn btn-outline-danger btn-sm px-1 py-0" data-action="delete" title="Delete subtask" style="font-size:0.65rem"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
@@ -413,7 +411,6 @@ App.Board = {
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-info btn-sm px-2" data-action="view" title="View task"><i class="fas fa-eye"></i></button>
-                            <button class="btn btn-outline-secondary btn-sm px-2" data-action="edit" title="Edit task"><i class="fas fa-pen"></i></button>
                             <button class="btn btn-outline-danger btn-sm px-2" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
