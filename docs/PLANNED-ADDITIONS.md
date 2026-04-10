@@ -1,5 +1,9 @@
-# Panned changes
+# List of changes/fixes
 
-## Add "Add Note" button on Task View Modal - was removed at one point and needs to be returned  
+## Fixes
 
-## Subtasks appear in both the parent card and the respective column for the task's status  
+### Clicking on suibtask title in parent card list opens new edit view instead of the subtask View modal
+
+## Panned changes
+
+### Subtasks appear in both the parent card and the respective column for the task's status  
