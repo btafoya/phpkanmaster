@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
@@ -20,6 +21,11 @@ return new class extends Migration {
 
             $table->foreign('task_id')->references('id')->on('tasks')->onDelete('cascade');
         });
+
+        // Grant permissions to anon role (only on PostgreSQL)
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement('GRANT SELECT, INSERT, UPDATE, DELETE ON task_notes TO anon');
+        }
     }
 
     public function down(): void
