@@ -1,3 +1,0 @@
--- docker/db/init/05-task-notes.sql
--- task_notes table created via Laravel migration (database/migrations/2026_04_09_090001_create_task_notes_table.php)
--- Permissions granted in 03-permissions.sql
