@@ -1346,6 +1346,12 @@ $(document).on('input', '[data-action="update-color"]', async function() {
     }
 });
 
+// Refresh board and column counts whenever any Bootstrap modal closes
+$(document).on('hidden.bs.modal', async () => {
+    await App.Board.render();
+    App.Board.updateCounts();
+});
+
 // Initialize Summernote and Flatpickr
 $(document).ready(() => {
     $('#summernote').summernote({
