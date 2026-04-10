@@ -619,6 +619,11 @@ App.Modal = {
             // Hide parent-inherited fields for subtask
             $('#taskColumnGroup, #categorySelect, #dueDateGroup, #priorityGroup, #parentTaskGroup').hide();
 
+            // Footer buttons — always in add/edit mode for subtask
+            $('#closeTaskBtn').addClass('d-none');
+            $('#saveTaskBtn').removeClass('d-none');
+            $('#editTaskBtn').addClass('d-none');
+
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         },
 
