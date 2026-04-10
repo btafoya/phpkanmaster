@@ -1,9 +1,13 @@
 # List of changes/fixes
 
-## Fixes
+## Issues
 
-### Clicking on suibtask title in parent card list opens new edit view instead of the subtask View modal
+### Clicking on suibtask title in parent card subtask list opens new edit view instead of the subtask View modal - Recent code change broke this, was working correctly at one point.
 
-## Panned changes
+### PWA on Android - does not ask to be installed
 
-### Subtasks appear in both the parent card and the respective column for the task's status  
+## New features
+
+### Make Subtasks appear in both the parent card subtask list (existing) and the respective column for the task's status  
+
+### Postgrest View - remote view of active tasks with their respective details (including notes) for use with a Openclaw agent

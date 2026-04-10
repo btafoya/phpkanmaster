@@ -1239,7 +1239,7 @@ $(document).on('click', '[data-action="toggle-children"]', function(e) {
 $(document).on('click', '[data-action="edit-child"]', function(e) {
     e.stopPropagation();
     const childId = $(this).data('id');
-    App.Modal.Task.open(childId);
+    App.Modal.Task.open(childId, 'view');
 });
 
 $(document).on('click', '[data-action="add-subtask"]', function(e) {
