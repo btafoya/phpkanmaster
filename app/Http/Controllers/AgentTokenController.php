@@ -31,6 +31,7 @@ class AgentTokenController extends Controller
             'sub' => config('auth.credentials.username'),
             'role' => 'agent',
             'iat' => $now,
+            'nbf' => $now,
             'exp' => $now + 3600,
         ];
 

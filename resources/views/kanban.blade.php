@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>phpKanMaster</title>
 
     {{-- PWA Meta Tags --}}
@@ -109,7 +110,7 @@
                 <div class="d-none d-sm-flex align-items-center gap-2 flex-shrink-0">
                     <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
                     <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
-                    <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
+                    <form method="POST" action="/logout" class="d-inline"><button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button></form>
                 </div>
                 <button class="navbar-toggler border-0 p-1 ms-2 d-sm-none" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarActions" aria-controls="navbarActions" aria-expanded="false"
@@ -125,7 +126,7 @@
                 <div class="d-flex flex-column align-items-stretch gap-2 w-100">
                     <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
                     <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
-                    <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
+                    <form method="POST" action="/logout" class="d-inline"><button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button></form>
                 </div>
             </div>
         </div>
@@ -460,6 +461,9 @@
     {{-- jQuery 3.7.1 --}}
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://code.jquery.com/jquery-migrate-4.0.2.min.js"></script>
+
+    {{-- DOMPurify XSS sanitization --}}
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
 
     {{-- jQuery UI Sortable --}}
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>

@@ -8,11 +8,13 @@ window.App = {
 
         async request(endpoint, options = {}) {
             const url = `${this.baseUrl}${endpoint}`;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
             const response = await fetch(url, {
                 ...options,
                 headers: {
                     'Content-Type': 'application/json',
                     'Prefer': 'return=representation',
+                    'X-CSRF-Token': csrfToken || '',
                     ...options.headers,
                 },
             });
@@ -146,6 +148,35 @@ window.App = {
     },
 };
 
+// XSS protection: sanitize user content before rendering into HTML
+// Plain text: strips all HTML tags
+function sanitizeText(str) {
+    if (str == null) return '';
+    return DOMPurify.sanitize(String(str), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+}
+
+// Ensure date-only strings are parsed as local (not UTC) to avoid timezone shift
+// e.g. "2024-01-15" should be noon local time, not midnight UTC
+function parseLocalDate(dateStr) {
+    if (!dateStr) return null;
+    // If it looks like a date-only string (YYYY-MM-DD), append T12:00:00
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return new Date(dateStr + 'T12:00:00');
+    }
+    return new Date(dateStr);
+}
+
+// Rich text (Summernote content): permits common formatting tags
+function sanitizeRichText(str) {
+    if (str == null) return '';
+    return DOMPurify.sanitize(String(str), {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'br', 'p', 'ul', 'ol', 'li', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'u'],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'style'],
+        ADD_ATTR: ['target'],
+        FORCE_BODY: true,
+    });
+}
+
 App.Board = {
     currentFilter: 'all',
     currentSearch: '',
@@ -193,7 +224,7 @@ App.Board = {
         $mobileContainer.find('button:not([data-filter="all"])').remove();
 
         categories.forEach(c => {
-            const btn = `<button class="btn btn-sm btn-outline-light" data-filter="${c.id}" style="border-color: ${c.color}; color: ${c.color}">${c.name}</button>`;
+            const btn = `<button class="btn btn-sm btn-outline-light" data-filter="${c.id}" style="border-color: ${c.color}; color: ${c.color}">${sanitizeText(c.name)}</button>`;
             $container.append(btn);
             $mobileContainer.append(btn);
         });
@@ -256,7 +287,7 @@ App.Board = {
         const priorityBadgeColor = { high: 'bg-danger', medium: 'bg-warning text-dark', low: 'bg-success' };
 
         const categoryBadge = category
-            ? `<span class="badge" style="background-color: ${category.color}">${category.name}</span>`
+            ? `<span class="badge" style="background-color: ${category.color}">${sanitizeText(category.name)}</span>`
             : '';
 
         const borderStyle = category ? `style="border-left-color: ${category.color}"` : '';
@@ -299,8 +330,8 @@ App.Board = {
                             <button class="btn btn-outline-danger btn-sm px-2" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
-                    <h6 class="card-title mb-1">${task.title}</h6>
-                    <p class="card-text small text-muted mb-2">${task.description ? task.description.substring(0, 60) + '...' : ''}</p>
+                    <h6 class="card-title mb-1">${sanitizeText(task.title)}</h6>
+                    <p class="card-text small text-muted mb-2">${task.description ? sanitizeText(task.description).substring(0, 60) + '...' : ''}</p>
                     <div class="d-flex justify-content-between align-items-center">
                         ${dueDate}
                         <span class="badge ${priorityBadgeColor[task.priority] || 'bg-secondary'}">${task.priority}</span>
@@ -325,7 +356,7 @@ App.Board = {
             return `
             <div class="d-flex align-items-center gap-2 py-1 child-task" data-id="${child.id}" data-task-column="${child.task_column}" data-action="edit-child">
                 <span class="${completedClass}">${isDone ? '●' : '○'}</span>
-                <span class="${completedClass} flex-grow-1">${child.title}</span>
+                <span class="${completedClass} flex-grow-1">${sanitizeText(child.title)}</span>
             </div>`;
         }).join('');
     },
@@ -356,11 +387,11 @@ App.Board = {
         const borderStyle = category ? `style="border-left-color: ${category.color}"` : '';
 
         const categoryBadge = category
-            ? `<span class="badge me-1" style="background-color: ${category.color}; font-size:0.6rem">${category.name}</span>`
+            ? `<span class="badge me-1" style="background-color: ${category.color}; font-size:0.6rem">${sanitizeText(category.name)}</span>`
             : '';
 
         const parentLabel = parent
-            ? `<div class="small text-muted mb-1"><i class="fas fa-level-up-alt me-1" style="font-size:0.6rem;transform:rotate(90deg)"></i>Subtask of: ${parent.title}</div>`
+            ? `<div class="small text-muted mb-1"><i class="fas fa-level-up-alt me-1" style="font-size:0.6rem;transform:rotate(90deg)"></i>Subtask of: ${sanitizeText(parent.title)}</div>`
             : '';
 
         const dueDate = child.due_date ? `<div class="small text-muted"><i class="far fa-calendar-alt"></i> ${child.due_date}</div>` : '';
@@ -379,7 +410,7 @@ App.Board = {
                             <button class="btn btn-outline-danger btn-sm px-1 py-0" data-action="delete" title="Delete subtask" style="font-size:0.65rem"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
-                    <h6 class="card-title mb-1 ${doneClass}" style="font-size:0.85rem">${child.title}</h6>
+                    <h6 class="card-title mb-1 ${doneClass}" style="font-size:0.85rem">${sanitizeText(child.title)}</h6>
                     <div class="d-flex justify-content-between align-items-center">
                         ${dueDate}
                         <span class="badge ${priorityBadgeColor[child.priority] || 'bg-secondary'}" style="font-size:0.6rem">${child.priority}</span>
@@ -394,55 +425,6 @@ App.Board = {
         App.Api.updateTask(childId, { task_column: newColumn })
             .then(() => App.Board.render())
             .catch(() => App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to update subtask' }));
-    },
-
-    createTaskCard(task, category) {
-        const priorityClass = `priority-${task.priority || 'low'}`;
-        const priorityBadgeColor = { high: 'bg-danger', medium: 'bg-warning text-dark', low: 'bg-success' };
-
-        const categoryBadge = category
-            ? `<span class="badge" style="background-color: ${category.color}">${category.name}</span>`
-            : '';
-
-        const borderStyle = category ? `style="border-left-color: ${category.color}"` : '';
-
-        const dueDate = task.due_date ? `<div class="small text-muted"><i class="far fa-calendar-alt"></i> ${task.due_date}</div>` : '';
-        const hasActiveRule = task.recurrence_rules?.some(r => r.active);
-        const recurrenceBadge = hasActiveRule ? `<span class="badge bg-secondary ms-1" title="Recurring task" style="font-size:0.65rem">🔁</span>` : '';
-
-        const bellIcon = task.reminder_at
-            ? `<button type="button"
-                 class="btn btn-link btn-sm p-0 ms-1 bell-icon"
-                 data-action="toggle-bell"
-                 data-id="${task.id}"
-                 data-muted="${task.disable_notifications}"
-                 title="${task.disable_notifications ? 'Notifications muted (click to enable)' : 'Notifications enabled (click to mute)'}"
-               >${task.disable_notifications ? '🔕' : '🔔'}</button>`
-            : '';
-
-        return $(`
-            <div class="card mb-3 task-card card-task ${priorityClass} shadow-sm" data-id="${task.id}" ${borderStyle}>
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="d-flex align-items-center gap-1">
-                            ${categoryBadge}
-                            ${bellIcon}
-                            ${recurrenceBadge}
-                        </div>
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-outline-info btn-sm px-2" data-action="view" title="View task"><i class="fas fa-eye"></i></button>
-                            <button class="btn btn-outline-danger btn-sm px-2" data-action="delete" title="Delete task"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                    <h6 class="card-title mb-1">${task.title}</h6>
-                    <p class="card-text small text-muted mb-2">${task.description ? task.description.substring(0, 60) + '...' : ''}</p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        ${dueDate}
-                        <span class="badge ${priorityBadgeColor[task.priority] || 'bg-secondary'}">${task.priority}</span>
-                    </div>
-                </div>
-            </div>
-        `);
     },
 
     updateCounts() {
@@ -466,14 +448,14 @@ App.Modal = {
             const categories = await App.Api.getCategories();
             const $select = $('#categorySelect').empty();
             $select.append('<option value="">None</option>');
-            categories.forEach(c => $select.append(`<option value="${c.id}">${c.name}</option>`));
+            categories.forEach(c => $select.append(`<option value="${c.id}">${sanitizeText(c.name)}</option>`));
 
             // Populate parent task dropdown (exclude children and self)
             const allTasks = await App.Api.getTasks();
             const parentTasks = allTasks.filter(t => !t.parent_id && t.id !== taskId);
             const $parentSelect = $('#parentTaskSelect').empty();
             $parentSelect.append('<option value="">— none —</option>');
-            parentTasks.forEach(t => $parentSelect.append(`<option value="${t.id}">${t.title}</option>`));
+            parentTasks.forEach(t => $parentSelect.append(`<option value="${t.id}">${sanitizeText(t.title)}</option>`));
 
             // Reset recurrence section
             App.Recurrence._currentRuleId = null;
@@ -509,7 +491,7 @@ App.Modal = {
                     // Populate read-only view content
                     $('#taskModalTitle').text('Task Details');
                     $('#viewTitle').text(data.title);
-                    $('#viewDescription').html(data.description || '<em class="text-secondary">No description</em>');
+                    $('#viewDescription').html(data.description ? sanitizeRichText(data.description) : '<em class="text-secondary">No description</em>');
 
                     // Notes (read-only list)
                     const notes = await App.Api.getNotesForTask(taskId);
@@ -522,13 +504,13 @@ App.Modal = {
                     // Category badge with color
                     const cat = categories.find(c => c.id === data.category_id);
                     if (cat) {
-                        $('#viewCategory').html(`<span class="badge" style="background:${cat.color}">${cat.name}</span>`);
+                        $('#viewCategory').html(`<span class="badge" style="background:${cat.color}">${sanitizeText(cat.name)}</span>`);
                     } else {
                         $('#viewCategory').html('<span class="text-secondary">—</span>');
                     }
 
                     // Due date formatted
-                    $('#viewDueDate').text(data.due_date ? new Date(data.due_date).toLocaleDateString() : '—');
+                    $('#viewDueDate').text(data.due_date ? parseLocalDate(data.due_date).toLocaleDateString() : '—');
 
                     // Column badge
                     const columnLabels = { new: 'New', in_progress: 'In Progress', review: 'Review', on_hold: 'On Hold', done: 'Done' };
@@ -537,13 +519,13 @@ App.Modal = {
                     // Parent task title
                     if (data.parent_id) {
                         const parent = allTasks.find(t => t.id === data.parent_id);
-                        $('#viewParentTask').text(parent ? parent.title : '—');
+                        $('#viewParentTask').text(parent ? sanitizeText(parent.title) : '—');
                     } else {
                         $('#viewParentTask').text('—');
                     }
 
                     // Reminder at and pushover priority
-                    $('#viewReminderAt').text(data.reminder_at ? new Date(data.reminder_at).toLocaleString() : '—');
+                    $('#viewReminderAt').text(data.reminder_at ? parseLocalDate(data.reminder_at).toLocaleString() : '—');
                     $('#viewPushoverPriority').text(data.pushover_priority ?? 0);
 
                     // Files as download links
@@ -610,7 +592,7 @@ App.Modal = {
             const categories = await App.Api.getCategories();
             const $select = $('#categorySelect').empty();
             $select.append('<option value="">None</option>');
-            categories.forEach(c => $select.append(`<option value="${c.id}">${c.name}</option>`));
+            categories.forEach(c => $select.append(`<option value="${c.id}">${sanitizeText(c.name)}</option>`));
 
             // Reset recurrence section
             App.Recurrence._currentRuleId = null;
@@ -719,8 +701,8 @@ App.Modal = {
                         });
                     } else {
                         const dtstart = data.reminder_at
-                            ? new Date(data.reminder_at).toISOString()
-                            : new Date().toISOString();
+                            ? parseLocalDate(data.reminder_at).toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z'
+                            : new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
 
                         await App.Api.createRecurrenceRule({
                             task_id:            savedTaskId,
@@ -754,7 +736,7 @@ App.Modal = {
                 $list.append(`
                     <div class="d-flex align-items-center gap-2 px-2 py-1 bg-dark border border-secondary rounded" data-id="${file.id}">
                         <span class="text-info">${icon}</span>
-                        <span class="small text-light text-truncate" style="max-width:150px">${file.filename}</span>
+                        <span class="small text-light text-truncate" style="max-width:150px">${sanitizeText(file.filename)}</span>
                         <button type="button" class="btn btn-sm p-0 text-danger" data-action="delete-file" data-id="${file.id}" title="Remove">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
                         </button>
@@ -811,7 +793,7 @@ App.Modal = {
                 $list.append(`
                     <div class="d-flex align-items-start gap-2 px-3 py-2 bg-dark border border-secondary rounded" data-id="${note.id}">
                         <div class="flex-grow-1 me-2">
-                            <div class="note-content small text-light">${note.content}</div>
+                            <div class="note-content small text-light">${sanitizeRichText(note.content)}</div>
                             <div class="note-time small text-secondary mt-1">${timeStr}</div>
                         </div>
                         <button type="button" class="btn btn-sm p-0 text-warning" data-action="edit-note" data-id="${note.id}" title="Edit">
@@ -858,7 +840,7 @@ App.Modal = {
                     ' at ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
                 $list.append(`
                     <div class="px-3 py-2 bg-dark border border-secondary rounded">
-                        <div class="note-content small text-light">${note.content}</div>
+                        <div class="note-content small text-light">${sanitizeRichText(note.content)}</div>
                         <div class="note-time small text-secondary mt-1">${timeStr}</div>
                     </div>
                 `);
@@ -879,10 +861,10 @@ App.Modal = {
                 $list.append(`
                     <a href="#" class="d-flex align-items-center gap-2 px-2 py-1 bg-dark border border-secondary rounded text-decoration-none view-file-download"
                        data-file-id="${file.id}"
-                       data-filename="${file.filename}"
+                       data-filename="${sanitizeText(file.filename)}"
                        data-mime-type="${file.mime_type || 'application/octet-stream'}">
                         <span class="text-info">${icon}</span>
-                        <span class="small text-light text-truncate" style="max-width:150px">${file.filename}</span>
+                        <span class="small text-light text-truncate" style="max-width:150px">${sanitizeText(file.filename)}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16" class="text-success"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
                     </a>
                 `);
@@ -989,7 +971,7 @@ App.Modal = {
                     <div class="d-flex align-items-center justify-content-between mb-2 p-2 bg-dark border border-secondary rounded">
                         <div class="d-flex align-items-center">
                             <input type="color" class="form-control-color me-2" value="${c.color}" data-id="${c.id}" data-action="update-color">
-                            <span class="cat-name">${c.name}</span>
+                            <span class="cat-name">${sanitizeText(c.name)}</span>
                         </div>
                         <button class="btn btn-sm btn-outline-danger" data-id="${c.id}" data-action="delete-cat">Delete</button>
                     </div>
@@ -1080,7 +1062,7 @@ App.Recurrence = {
         };
 
         const dtstart = formData.reminder_at
-            ? new Date(formData.reminder_at).toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z'
+            ? parseLocalDate(formData.reminder_at).toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z'
             : new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
 
         const rrule = {
@@ -1099,7 +1081,7 @@ App.Recurrence = {
         }
 
         if (formData.endType === 'on_date' && formData.endDate) {
-            rrule.UNTIL = new Date(formData.endDate).toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
+            rrule.UNTIL = parseLocalDate(formData.endDate).toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
         }
 
         return JSON.stringify(rrule);
@@ -1245,7 +1227,9 @@ App.Recurrence = {
 
 // Global error handlers
 window.addEventListener('error', (e) => {
-    if (e.message && !e.message.startsWith('ResizeObserver') && !e.message.startsWith('Non-Error')) {
+    if (e.message && !e.message.startsWith('ResizeObserver') &&
+        !e.message.startsWith('Non-Error')) {
+        console.error('Board error:', e.error || e);
         App.Alerts?.Toast.fire({ icon: 'error', title: 'An error occurred' });
     }
 });
