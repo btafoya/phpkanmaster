@@ -98,9 +98,11 @@ docker compose exec app php artisan tinker
 docker compose -f docker-compose.yml exec -w /var/www/html app composer update
 
 # Run tests (uses in-memory SQLite — does NOT require Docker)
-composer test                        # all tests
-php artisan test --filter TestName   # single test
-php artisan test tests/Feature/      # test suite
+npm test                              # JS unit tests (Vitest)
+npm run test:phpunit                      # PHPUnit tests
+npm run test:phpstan                  # PHPStan static analysis
+npm run test:all                       # all three above, in sequence
+php artisan test --filter TestName   # single PHPUnit test
 
 # Code style (Laravel Pint)
 ./vendor/bin/pint

@@ -150,6 +150,22 @@ App.Board = {
     currentFilter: 'all',
     currentSearch: '',
 
+    sortTasks(tasks) {
+        const priorityWeight = { high: 3, medium: 2, low: 1 };
+        return tasks.slice().sort((a, b) => {
+            const pA = priorityWeight[a.priority] || 0;
+            const pB = priorityWeight[b.priority] || 0;
+            if (pB !== pA) return pB - pA;
+            const hasDateA = a.due_date ? 1 : 0;
+            const hasDateB = b.due_date ? 1 : 0;
+            if (hasDateB !== hasDateA) return hasDateB - hasDateA;
+            if (a.due_date && b.due_date) {
+                if (a.due_date !== b.due_date) return a.due_date.localeCompare(b.due_date);
+            }
+            return (a.position || 0) - (b.position || 0);
+        });
+    },
+
     async init() {
         await this.renderFilters();
         this.initSearch();
@@ -208,7 +224,7 @@ App.Board = {
             : tasks.filter(t => t.category_id === this.currentFilter);
 
         // Separate parents (no parent_id) from children (has parent_id)
-        const parents = filteredTasks.filter(t => !t.parent_id);
+        const parents = this.sortTasks(filteredTasks.filter(t => !t.parent_id));
         const childrenByParent = filteredTasks
             .filter(t => t.parent_id)
             .reduce((acc, child) => {
@@ -224,7 +240,8 @@ App.Board = {
         });
 
         // Render child (subtask) cards in their respective columns
-        filteredTasks.filter(t => t.parent_id).forEach(child => {
+        const sortedChildren = this.sortTasks(filteredTasks.filter(t => t.parent_id));
+        sortedChildren.forEach(child => {
             const parent = tasks.find(t => t.id === child.parent_id);
             const category = parent ? categoryMap[parent.category_id] : null;
             const card = this.createChildCard(child, parent, category);
@@ -236,6 +253,7 @@ App.Board = {
 
     createParentCard(task, children, category) {
         const priorityClass = `priority-${task.priority || 'low'}`;
+        const priorityBadgeColor = { high: 'bg-danger', medium: 'bg-warning text-dark', low: 'bg-success' };
 
         const categoryBadge = category
             ? `<span class="badge" style="background-color: ${category.color}">${category.name}</span>`
@@ -285,7 +303,7 @@ App.Board = {
                     <p class="card-text small text-muted mb-2">${task.description ? task.description.substring(0, 60) + '...' : ''}</p>
                     <div class="d-flex justify-content-between align-items-center">
                         ${dueDate}
-                        <span class="badge bg-light text-dark border">${task.priority}</span>
+                        <span class="badge ${priorityBadgeColor[task.priority] || 'bg-secondary'}">${task.priority}</span>
                     </div>
                     <div class="small text-primary mt-2 add-subtask" data-action="add-subtask" data-parent-id="${task.id}" style="cursor:pointer"><i class="fas fa-plus me-1"></i>Add subtask</div>
                     ${childrenSummary}
@@ -332,6 +350,7 @@ App.Board = {
 
     createChildCard(child, parent, category) {
         const priorityClass = `priority-${child.priority || 'low'}`;
+        const priorityBadgeColor = { high: 'bg-danger', medium: 'bg-warning text-dark', low: 'bg-success' };
         const isDone = child.task_column === 'done';
         const doneClass = isDone ? 'text-muted text-decoration-line-through' : '';
         const borderStyle = category ? `style="border-left-color: ${category.color}"` : '';
@@ -363,7 +382,7 @@ App.Board = {
                     <h6 class="card-title mb-1 ${doneClass}" style="font-size:0.85rem">${child.title}</h6>
                     <div class="d-flex justify-content-between align-items-center">
                         ${dueDate}
-                        <span class="badge bg-light text-dark border" style="font-size:0.6rem">${child.priority}</span>
+                        <span class="badge ${priorityBadgeColor[child.priority] || 'bg-secondary'}" style="font-size:0.6rem">${child.priority}</span>
                     </div>
                 </div>
             </div>
@@ -379,6 +398,7 @@ App.Board = {
 
     createTaskCard(task, category) {
         const priorityClass = `priority-${task.priority || 'low'}`;
+        const priorityBadgeColor = { high: 'bg-danger', medium: 'bg-warning text-dark', low: 'bg-success' };
 
         const categoryBadge = category
             ? `<span class="badge" style="background-color: ${category.color}">${category.name}</span>`
@@ -418,7 +438,7 @@ App.Board = {
                     <p class="card-text small text-muted mb-2">${task.description ? task.description.substring(0, 60) + '...' : ''}</p>
                     <div class="d-flex justify-content-between align-items-center">
                         ${dueDate}
-                        <span class="badge bg-light text-dark border">${task.priority}</span>
+                        <span class="badge ${priorityBadgeColor[task.priority] || 'bg-secondary'}">${task.priority}</span>
                     </div>
                 </div>
             </div>
