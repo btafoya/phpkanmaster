@@ -105,6 +105,22 @@ The script prompts for username and password, starts the stack, installs depende
 | `postgrest` | PostgREST API (internal only) |
 | `caddy` | Reverse proxy (port 80/443) |
 | `scheduler` | Laravel scheduler (`schedule:work`) for reminders |
+| `backup` | Daily PostgreSQL backup (runs at 2 AM, retains 7 days) |
+
+## Backup
+
+Backups run automatically daily at 2 AM via the `backup` service. Backups are stored in `./backups/` with retention of 7 days.
+
+```bash
+# Start the backup service
+docker compose up -d --build backup
+
+# Manually trigger a backup
+docker compose exec backup /usr/local/bin/backup.sh
+
+# Restore from backup
+gunzip < backups/kanban_YYYYMMDD_HHMMSS.sql.gz | docker compose exec -T db psql -U kanban -d kanban
+```
 
 ## Configuration
 

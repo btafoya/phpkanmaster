@@ -75,6 +75,22 @@ services:
     networks:
       - phpkanmaster
 
+  backup:
+    build:
+      context: ./docker/db
+      dockerfile: Dockerfile.backup
+    container_name: phpkanmaster_backup
+    restart: unless-stopped
+    volumes:
+      - ./backups:/backups
+    environment:
+      - PGPASSWORD=${DB_PASSWORD:-kanban_secret}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - phpkanmaster
+
   caddy:
     image: caddy:latest
     container_name: phpkanmaster_caddy

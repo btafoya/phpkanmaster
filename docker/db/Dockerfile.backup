@@ -1,0 +1,16 @@
+FROM postgres:17
+
+RUN apt-get update && apt-get install -y \
+    cron \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY backup.sh /usr/local/bin/backup.sh
+RUN chmod +x /usr/local/bin/backup.sh
+
+# Create backup directory
+RUN mkdir -p /backups && chown postgres:postgres /backups
+
+# Setup cron schedule - run daily at 2am
+RUN (crontab -l 2>/dev/null; echo "0 2 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1") | crontab -
+
+CMD ["cron", "-f"]

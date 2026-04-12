@@ -30,3 +30,4 @@ graphify-out/
 .env.bak
 .serena/
 .remember/
+backups/

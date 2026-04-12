@@ -161,6 +161,14 @@ PostgREST connects as `kanban_postgrest` user with `anon` role having CRUD permi
 
 Laravel's own migrations only create `users`, `cache`, and `jobs` tables (unused for core functionality).
 
+### Daily Backup
+
+A `backup` service runs pg_dump daily at 2 AM via cron. See `docker/db/backup.sh`. Backups are gzipped SQL files in `./backups/` with 7-day retention. Restore with:
+
+```bash
+gunzip < backups/kanban_TIMESTAMP.sql.gz | docker compose exec -T db psql -U kanban -d kanban
+```
+
 ### Environment Variables
 
 Key variables in `.env`:
