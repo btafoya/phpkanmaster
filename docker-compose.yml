@@ -21,6 +21,8 @@ services:
     image: postgres:17
     container_name: phpkanmaster_db
     restart: unless-stopped
+    ports:
+      - "5436:5432"
     environment:
       POSTGRES_DB: kanban
       POSTGRES_USER: kanban
