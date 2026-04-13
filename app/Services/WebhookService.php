@@ -224,15 +224,7 @@ class WebhookService
         }
 
         if (isset($issue['priority'])) {
-            $priority = $issue['priority'];
-            // Normalize priority: 1=high, 2=medium, 3+=low
-            if ($priority === 1 || $priority === '1') {
-                $data['priority'] = 'high';
-            } elseif ($priority === 2 || $priority === '2') {
-                $data['priority'] = 'medium';
-            } else {
-                $data['priority'] = 'low';
-            }
+            $data['priority'] = $this->mapPriority($issue['priority']);
         }
 
         if (isset($issue['status'])) {
@@ -241,6 +233,24 @@ class WebhookService
         }
 
         return $data;
+    }
+
+    private function mapPriority(int|string $priority): string
+    {
+        // Map external priority IDs to phpKanMaster priorities:
+        // 10=None → low, 20=Low → low, 30=Normal → medium,
+        // 40=High → high, 50=Urgent → high, 60=Immediate → high
+        $p = (int) $priority;
+
+        if ($p >= 40) {
+            return 'high';
+        }
+
+        if ($p >= 30) {
+            return 'medium';
+        }
+
+        return 'low';
     }
 
     private function mapStatusToColumn(string $source, int $externalStatus): string

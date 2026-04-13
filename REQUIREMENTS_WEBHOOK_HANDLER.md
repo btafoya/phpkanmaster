@@ -52,7 +52,7 @@ Configurable mapping from external status codes to kanban columns.
 | `summary` | `title` |
 | `description` | `description` (rich text) |
 | `status` | → `webhook_status_mappings` → `task_column` |
-| `priority` | `priority` (low/medium/high) |
+| `priority` | `priority` (mapped: 10/20→low, 30→medium, 40/50/60→high) |
 | `severity` | Appended to description |
 | `reporter` | Appended to description |
 | `handler` | Appended to description |
