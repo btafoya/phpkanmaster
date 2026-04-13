@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 class WebhookService
 {
     private const POSTGREST_URL = 'http://postgrest:3000';
+    private const BUSINESS_CATEGORY_NAME = 'Business';
 
     public function handleWebhook(string $source, array $payload): array
     {
@@ -64,6 +65,12 @@ class WebhookService
 
         if ($additionalFieldsText) {
             $taskData['description'] = ($taskData['description'] ?? '') . "\n\n" . $additionalFieldsText;
+        }
+
+        // Assign Business category to all webhook tasks
+        $businessCategoryId = $this->getBusinessCategoryId();
+        if ($businessCategoryId) {
+            $taskData['category_id'] = $businessCategoryId;
         }
 
         // Create task via PostgREST
@@ -124,6 +131,14 @@ class WebhookService
         if ($additionalFieldsText) {
             $currentDescription = $this->getCurrentTaskDescription($taskId);
             $taskData['description'] = ($currentDescription ?? '') . "\n\n" . $additionalFieldsText;
+        }
+
+        // Ensure Business category is assigned on update
+        if (empty($taskData['category_id'])) {
+            $businessCategoryId = $this->getBusinessCategoryId();
+            if ($businessCategoryId) {
+                $taskData['category_id'] = $businessCategoryId;
+            }
         }
 
         // Check for conflicts (local modification since last sync)
@@ -476,6 +491,44 @@ class WebhookService
             'task_id' => $taskId,
             'content' => $noteContent,
         ]);
+    }
+
+    /**
+     * Get or create the Business category via PostgREST.
+     * All webhook-created tasks are assigned to this category.
+     */
+    private function getBusinessCategoryId(): ?string
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
+        ])->get(self::POSTGREST_URL . '/categories?name=eq.' . urlencode(self::BUSINESS_CATEGORY_NAME));
+
+        if (! $response->successful()) {
+            Log::error('Failed to query Business category', ['response' => $response->body()]);
+            return null;
+        }
+
+        $categories = $response->json();
+        if (! empty($categories[0]['id'])) {
+            return $categories[0]['id'];
+        }
+
+        // Create the Business category if it doesn't exist
+        $createResponse = Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
+            'Prefer' => 'return=representation',
+        ])->post(self::POSTGREST_URL . '/categories', [
+            'name' => self::BUSINESS_CATEGORY_NAME,
+            'color' => '#6c757d',
+        ]);
+
+        if (! $createResponse->successful()) {
+            Log::error('Failed to create Business category', ['response' => $createResponse->body()]);
+            return null;
+        }
+
+        $created = $createResponse->json();
+        return $created[0]['id'] ?? $created['id'] ?? null;
     }
 
     private function createTask(array $data): ?string
