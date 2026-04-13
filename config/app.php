@@ -131,4 +131,17 @@ return [
 
     'jwt_secret' => env('JWT_SECRET'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook IP Allowlist
+    |--------------------------------------------------------------------------
+    |
+    | Comma-separated list of IP addresses or CIDR ranges that are allowed
+    | to send webhooks to the /api/webhooks/* endpoints. If empty, all IPs
+    | are allowed (not recommended for production).
+    |
+    */
+
+    'webhook_allowed_ips' => env('WEBHOOK_ALLOWED_IPS', ''),
+
 ];
