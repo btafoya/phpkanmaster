@@ -7,7 +7,9 @@ window.App = {
         baseUrl: window.POSTGREST_URL || '/api',
 
         async request(endpoint, options = {}) {
-            const url = `${this.baseUrl}${endpoint}`;
+            // Strip trailing slashes — PostgREST (PGRST125) rejects paths like /tasks/
+            const cleanEndpoint = endpoint.replace(/\/$/, '');
+            const url = `${this.baseUrl}${cleanEndpoint}`;
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
             const response = await fetch(url, {
                 ...options,
