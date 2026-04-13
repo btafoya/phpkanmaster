@@ -50,17 +50,17 @@ log_test() {
 
 log_pass() {
     echo -e "  ${GREEN}✓ PASS${NC}: $1"
-    ((PASS++))
+    PASS=$((PASS + 1))
 }
 
 log_fail() {
     echo -e "  ${RED}✗ FAIL${NC}: $1"
-    ((FAIL++))
+    FAIL=$((FAIL + 1))
 }
 
 log_skip() {
     echo -e "  ${YELLOW}⊘ SKIP${NC}: $1"
-    ((SKIP++))
+    SKIP=$((SKIP + 1))
 }
 
 # Make a webhook request and return status code + response body
@@ -129,7 +129,7 @@ PAYLOAD_CREATE=$(cat <<EOF
   "event_type": "issue.created",
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
   "issue": {
-    "id": ${EXTERNAL_ID},
+    "id": "${EXTERNAL_ID}",
     "summary": "[Test] Webhook integration test task",
     "description": "Created by webhook test script at $(date -u +%Y-%m-%dT%H:%MZ)",
     "steps_to_reproduce": "1. Run webhook-test.sh\n2. Check kanban board",
@@ -155,7 +155,7 @@ PAYLOAD_UPDATE=$(cat <<EOF
   "event_type": "issue.updated",
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
   "issue": {
-    "id": ${EXTERNAL_ID},
+    "id": "${EXTERNAL_ID}",
     "summary": "[Test] Updated webhook integration test task",
     "description": "Updated by webhook test script",
     "status": 30,
@@ -186,7 +186,7 @@ PAYLOAD_NOTE_ADDED=$(cat <<EOF
   "event_type": "issue.note_added",
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
   "issue": {
-    "id": ${EXTERNAL_ID},
+    "id": "${EXTERNAL_ID}",
     "summary": "[Test] Updated webhook integration test task",
     "status": 30,
     "priority": 50,
@@ -374,7 +374,7 @@ test_priority_mapping() {
   "event_type": "issue.created",
   "timestamp": "$ts",
   "issue": {
-    "id": ${pid_high},
+    "id": "${pid_high}",
     "summary": "[Test] Priority high test",
     "status": 10,
     "priority": 40,
@@ -398,7 +398,7 @@ EOF
   "event_type": "issue.created",
   "timestamp": "$ts",
   "issue": {
-    "id": ${pid_med},
+    "id": "${pid_med}",
     "summary": "[Test] Priority medium test",
     "status": 10,
     "priority": 30,
@@ -421,7 +421,7 @@ EOF
   "event_type": "issue.created",
   "timestamp": "$ts",
   "issue": {
-    "id": ${pid_low},
+    "id": "${pid_low}",
     "summary": "[Test] Priority low test",
     "status": 10,
     "priority": 20,

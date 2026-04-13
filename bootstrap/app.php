@@ -23,7 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
             ]);
+
+            return true; // Prevent default reporting (avoids duplicate logging with full context)
         });
     })->create();

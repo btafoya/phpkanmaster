@@ -15,6 +15,37 @@ class WebhookService
     private const POSTGREST_URL = 'http://postgrest:3000';
     private const BUSINESS_CATEGORY_NAME = 'Business';
 
+    /** @var string|null Cached PostgREST JWT for the current request */
+    private ?string $postgrestToken = null;
+
+    /**
+     * Generate a PostgREST auth header with a properly signed JWT.
+     *
+     * PostgREST requires a JWT (not a raw secret) with a `role` claim.
+     * The token is cached for the lifetime of this service instance.
+     *
+     * @return array<string, string>
+     */
+    private function postgrestAuthHeaders(): array
+    {
+        if ($this->postgrestToken === null) {
+            $this->postgrestToken = $this->generatePostgrestJwt();
+        }
+
+        return ['Authorization' => 'Bearer ' . $this->postgrestToken];
+    }
+
+    private function generatePostgrestJwt(): string
+    {
+        $secret = config('app.jwt_secret');
+
+        $header = rtrim(strtr(base64_encode(json_encode(['typ' => 'JWT', 'alg' => 'HS256'])), '+/', '-_'), '=');
+        $payload = rtrim(strtr(base64_encode(json_encode(['role' => 'anon', 'exp' => time() + 3600])), '+/', '-_'), '=');
+        $signature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$header.$payload", $secret, true)), '+/', '-_'), '=');
+
+        return "$header.$payload.$signature";
+    }
+
     public function handleWebhook(string $source, array $payload): array
     {
         $eventType = $payload['event_type'] ?? null;
@@ -457,9 +488,9 @@ class WebhookService
         }
 
         // Query task_notes directly
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
-        ])->get(self::POSTGREST_URL . '/task_notes?task_id=eq.' . $taskId);
+        $response = Http::withHeaders(
+            $this->postgrestAuthHeaders()
+        )->get(self::POSTGREST_URL . '/task_notes?task_id=eq.' . $taskId);
 
         if (! $response->successful()) {
             return false;
@@ -484,10 +515,10 @@ class WebhookService
             $noteContent .= " (external_id: {$externalNoteId})";
         }
 
-        Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
-            'Prefer' => 'return=representation',
-        ])->post(self::POSTGREST_URL . '/task_notes', [
+        Http::withHeaders(array_merge(
+            $this->postgrestAuthHeaders(),
+            ['Prefer' => 'return=representation'],
+        ))->post(self::POSTGREST_URL . '/task_notes', [
             'task_id' => $taskId,
             'content' => $noteContent,
         ]);
@@ -499,9 +530,9 @@ class WebhookService
      */
     private function getBusinessCategoryId(): ?string
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
-        ])->get(self::POSTGREST_URL . '/categories?name=eq.' . urlencode(self::BUSINESS_CATEGORY_NAME));
+        $response = Http::withHeaders(
+            $this->postgrestAuthHeaders()
+        )->get(self::POSTGREST_URL . '/categories?name=eq.' . urlencode(self::BUSINESS_CATEGORY_NAME));
 
         if (! $response->successful()) {
             Log::error('Failed to query Business category', ['response' => $response->body()]);
@@ -514,10 +545,10 @@ class WebhookService
         }
 
         // Create the Business category if it doesn't exist
-        $createResponse = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
-            'Prefer' => 'return=representation',
-        ])->post(self::POSTGREST_URL . '/categories', [
+        $createResponse = Http::withHeaders(array_merge(
+            $this->postgrestAuthHeaders(),
+            ['Prefer' => 'return=representation'],
+        ))->post(self::POSTGREST_URL . '/categories', [
             'name' => self::BUSINESS_CATEGORY_NAME,
             'color' => '#6c757d',
         ]);
@@ -539,10 +570,10 @@ class WebhookService
             $data['position'] = $maxPosition + 1;
         }
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
-            'Prefer' => 'return=representation',
-        ])->post(self::POSTGREST_URL . '/tasks', $data);
+        $response = Http::withHeaders(array_merge(
+            $this->postgrestAuthHeaders(),
+            ['Prefer' => 'return=representation'],
+        ))->post(self::POSTGREST_URL . '/tasks', $data);
 
         if (! $response->successful()) {
             Log::error('Failed to create task via PostgREST', [
@@ -562,10 +593,10 @@ class WebhookService
             return true;
         }
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
-            'Prefer' => 'return=representation',
-        ])->patch(self::POSTGREST_URL . "/tasks?id=eq.{$taskId}", $data);
+        $response = Http::withHeaders(array_merge(
+            $this->postgrestAuthHeaders(),
+            ['Prefer' => 'return=representation'],
+        ))->patch(self::POSTGREST_URL . "/tasks?id=eq.{$taskId}", $data);
 
         if (! $response->successful()) {
             Log::error('Failed to update task via PostgREST', [
@@ -581,9 +612,9 @@ class WebhookService
 
     private function getTask(string $taskId): ?array
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
-        ])->get(self::POSTGREST_URL . "/tasks?id=eq.{$taskId}");
+        $response = Http::withHeaders(
+            $this->postgrestAuthHeaders()
+        )->get(self::POSTGREST_URL . "/tasks?id=eq.{$taskId}");
 
         if (! $response->successful()) {
             return null;
@@ -601,9 +632,9 @@ class WebhookService
 
     private function getMaxPosition(string $column): int
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('app.jwt_secret'),
-        ])->get(self::POSTGREST_URL . "/tasks?task_column=eq.{$column}&order=position.desc&limit=1");
+        $response = Http::withHeaders(
+            $this->postgrestAuthHeaders()
+        )->get(self::POSTGREST_URL . "/tasks?task_column=eq.{$column}&order=position.desc&limit=1");
 
         if (! $response->successful()) {
             return 0;

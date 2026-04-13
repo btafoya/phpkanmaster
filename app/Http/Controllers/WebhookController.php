@@ -51,7 +51,22 @@ class WebhookController extends Controller
             return response()->json(['error' => 'Invalid JSON payload'], 400);
         }
 
-        $result = $this->webhookService->handleWebhook($source, $payload);
+        try {
+            $result = $this->webhookService->handleWebhook($source, $payload);
+        } catch (\Throwable $e) {
+            Log::error('Webhook handler threw exception', [
+                'source' => $source,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'error' => 'Internal webhook error',
+                'detail' => $e->getMessage(),
+            ], 500);
+        }
 
         if (! ($result['success'] ?? false)) {
             $code = $result['code'] ?? 500;

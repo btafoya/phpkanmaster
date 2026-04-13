@@ -27,6 +27,7 @@ class IssueMapping extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'external_id',
         'task_id',
         'source',
