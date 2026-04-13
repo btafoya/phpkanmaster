@@ -129,9 +129,9 @@ Field: handler
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/webhooks/{source}` | Receive webhooks from external system |
+| POST | `/webhooks/{source}` | Receive webhooks from external system |
 
-**Example**: `/api/webhooks/jira`, `/api/webhooks/redmine`
+**Example**: `/webhooks/jira`, `/webhooks/redmine`
 
 **Behavior**: Route to appropriate handler based on `source` URL parameter.
 
@@ -214,7 +214,7 @@ Field: handler
 - [x] Conflict resolution → Note the conflict instead of overwriting
 - [x] Notes handling → Existing `task_notes` table
 - [x] IP config storage → Single env var
-- [x] Webhook URL structure → Separate endpoint per source (`/api/webhooks/{source}`)
+- [x] Webhook URL structure → Separate endpoint per source (`/webhooks/{source}`)
 - [x] Number of sources → One now, architect for many
 - [x] Mapping table structure → source + external_status → kanban_column
 

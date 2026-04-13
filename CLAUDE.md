@@ -115,8 +115,10 @@ php -r "echo password_hash('your_password', PASSWORD_BCRYPT);"
 
 ```
 Browser → Caddy :80
-  /api/*    → strip prefix → PostgREST:3000 → PostgreSQL
-  /*        → PHP-FPM (Laravel) app:9000
+  /api/agent/token → PHP-FPM (Laravel) app:9000
+  /api/*           → strip prefix → PostgREST:3000 → PostgreSQL
+  /webhooks/*      → PHP-FPM (Laravel) app:9000
+  /*               → PHP-FPM (Laravel) app:9000
 ```
 
 `docker/caddy/Caddyfile` defines this split. PostgREST is internal-only (no exposed port).

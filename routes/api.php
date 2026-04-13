@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AgentTokenController;
 use App\Http\Controllers\AgentTaskController;
-use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/agent/token', [AgentTokenController::class, 'token'])
@@ -14,6 +13,3 @@ Route::middleware('throttle:30,1')->group(function () {
     Route::delete('/agent/tasks/{id}', [AgentTaskController::class, 'destroy']);
 });
 
-// External webhook handler
-Route::post('/webhooks/{source}', [WebhookController::class, 'handle'])
-    ->middleware('throttle:60,1');
