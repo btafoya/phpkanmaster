@@ -17,6 +17,11 @@
         reverse_proxy postgrest:3000
     }
 
+    # SSE server — live board updates
+    handle /sse {
+        reverse_proxy sse:8080
+    }
+
     # Laravel app — all other requests
     handle {
         root * /var/www/html/public
@@ -27,7 +32,7 @@
             X-Content-Type-Options "nosniff"
             Referrer-Policy "strict-origin-when-cross-origin"
             Permissions-Policy "camera=(), microphone=(), geolocation=()"
-            Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self'; frame-src 'self';"
+            Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' /sse; frame-src 'self';"
             -Server
         }
 

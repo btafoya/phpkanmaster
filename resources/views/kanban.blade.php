@@ -108,6 +108,7 @@
                         placeholder="Search tasks..." style="width: 160px;">
                 </div>
                 <div class="d-none d-sm-flex align-items-center gap-2 flex-shrink-0">
+                    <span id="sse-status" class="d-inline-block rounded-circle" style="width:8px;height:8px;background:#6c757d" title="Connecting..."></span>
                     <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
                     <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
                     <form method="POST" action="/logout" class="d-inline"><button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button></form>
@@ -124,6 +125,10 @@
                     <!-- Category pills injected here -->
                 </div>
                 <div class="d-flex flex-column align-items-stretch gap-2 w-100">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span id="sse-status-mobile" class="d-inline-block rounded-circle" style="width:8px;height:8px;background:#6c757d" title="Connecting..."></span>
+                        <small class="text-secondary" id="sse-label-mobile">Connecting...</small>
+                    </div>
                     <button class="btn btn-primary btn-sm" onclick="App.Modal.Task.open()">+ Add Task</button>
                     <button class="btn btn-outline-light btn-sm" onclick="App.Modal.Category.open()">Categories</button>
                     <form method="POST" action="/logout" class="d-inline"><button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button></form>

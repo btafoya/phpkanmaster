@@ -1030,6 +1030,169 @@ App.DnD = {
     }
 };
 
+App.SSE = {
+    _source: null,
+    _pollTimer: null,
+    _pendingRefresh: false,
+    _pendingRefreshType: null,   // 'board' or 'notes'
+    _connected: false,
+    _pollInterval: 10000,       // 10s fallback polling
+
+    init() {
+        this._connect();
+        this._watchInteractions();
+    },
+
+    // ── SSE connection ──────────────────────────────────────────────────
+
+    _connect() {
+        if (this._source) {
+            this._source.close();
+        }
+
+        this._source = new EventSource('/sse');
+
+        this._source.onopen = () => {
+            this._connected = true;
+            this._setStatus('connected');
+            this._stopPolling();
+            // Apply any queued refresh now that we're back
+            if (this._pendingRefresh) {
+                this._applyRefresh();
+            }
+        };
+
+        this._source.onerror = () => {
+            this._connected = false;
+            this._setStatus('disconnected');
+            this._source.close();
+            this._source = null;
+            // Fallback to polling
+            this._startPolling();
+            // Attempt SSE reconnect after 15s
+            setTimeout(() => this._connect(), 15000);
+        };
+
+        // Listen for specific event types
+        this._source.addEventListener('tasks-changed', () => {
+            this._queueRefresh('board');
+        });
+
+        this._source.addEventListener('categories-changed', () => {
+            this._queueRefresh('board');
+        });
+
+        this._source.addEventListener('files-changed', () => {
+            this._queueRefresh('board');
+        });
+
+        this._source.addEventListener('notes-changed', () => {
+            this._queueRefresh('notes');
+        });
+    },
+
+    // ── Deferred refresh ────────────────────────────────────────────────
+
+    _isInteracting() {
+        const modalVisible = $('#taskModal').hasClass('show') || $('#categoryModal').hasClass('show');
+        const dragging = $('.ui-sortable-helper').length > 0;
+        return modalVisible || dragging;
+    },
+
+    _queueRefresh(type) {
+        // Always queue — notes refresh is safe during modal if we target the right list
+        if (type === 'notes') {
+            this._refreshNotes();
+            return;
+        }
+
+        // Board refresh: defer if modal is open or dragging
+        this._pendingRefresh = true;
+        this._pendingRefreshType = type;
+
+        if (!this._isInteracting()) {
+            this._applyRefresh();
+        }
+    },
+
+    _applyRefresh() {
+        if (!this._pendingRefresh) return;
+        this._pendingRefresh = false;
+        const type = this._pendingRefreshType;
+        this._pendingRefreshType = null;
+
+        // Save scroll position
+        const $board = $('#kanban-board');
+        const scrollLeft = $board.scrollLeft();
+
+        App.Board.render().then(() => {
+            // Restore scroll position after re-render
+            $board.scrollLeft(scrollLeft);
+            App.DnD.init();
+        });
+    },
+
+    _refreshNotes() {
+        const taskId = $('[name="id"]').val();
+        if (!taskId) return;
+
+        // Refresh notes list in whichever view is active
+        if ($('#taskViewContent').is(':visible')) {
+            App.Api.getNotesForTask(taskId).then(notes => {
+                App.Modal.Task._renderViewNotesList(notes);
+            });
+        } else {
+            App.Modal.Task._loadNotes(taskId);
+        }
+    },
+
+    // ── Interaction watchers ────────────────────────────────────────────
+
+    _watchInteractions() {
+        // When a modal closes, apply any pending refresh
+        $(document).on('hidden.bs.modal', () => {
+            if (this._pendingRefresh) {
+                // Small delay to let the modal hide animation finish
+                setTimeout(() => this._applyRefresh(), 100);
+            }
+        });
+    },
+
+    // ── Status indicator ────────────────────────────────────────────────
+
+    _setStatus(state) {
+        const colors = { connected: '#22c55e', disconnected: '#ef4444', connecting: '#6c757d' };
+        const labels = { connected: 'Live', disconnected: 'Offline', connecting: 'Connecting...' };
+        const color = colors[state] || colors.connecting;
+        const label = labels[state] || labels.connecting;
+
+        $('#sse-status, #sse-status-mobile').css('background', color).attr('title', label);
+        $('#sse-label-mobile').text(label);
+    },
+
+    // ── Polling fallback ────────────────────────────────────────────────
+
+    _startPolling() {
+        if (this._pollTimer) return;
+        this._pollTimer = setInterval(() => {
+            App.Board.render();
+        }, this._pollInterval);
+    },
+
+    _stopPolling() {
+        if (this._pollTimer) {
+            clearInterval(this._pollTimer);
+            this._pollTimer = null;
+        }
+    },
+
+    // ── Public API ─────────────────────────────────────────────────────
+
+    isConnected() {
+        return this._connected;
+    },
+};
+
 App.Alerts = {
     Toast: Swal.mixin({
         toast: true,
@@ -1243,6 +1406,7 @@ $(document).ready(async () => {
     await App.Board.init();
     App.DnD.init();
     App.Recurrence.initModalBindings();
+    App.SSE.init();
     console.log('phpKanMaster board initialized');
 });
 
