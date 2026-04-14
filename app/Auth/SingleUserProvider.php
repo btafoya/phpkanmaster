@@ -4,9 +4,14 @@ namespace App\Auth;
 
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Cache;
 
 class SingleUserProvider implements UserProvider
 {
+    private const CACHE_KEY_PREFIX = 'auth:remember_token:';
+
+    private const CACHE_TTL = 576000; // minutes — matches SessionGuard default remember duration
+
     public function retrieveById($identifier): ?Authenticatable
     {
         $username = config('auth.credentials.username');
@@ -18,7 +23,21 @@ class SingleUserProvider implements UserProvider
 
     public function retrieveByToken($identifier, $token): ?Authenticatable
     {
-        return $this->retrieveById($identifier);
+        $cached = Cache::get(self::CACHE_KEY_PREFIX.$identifier);
+
+        if ($cached !== $token) {
+            return null;
+        }
+
+        $username = config('auth.credentials.username');
+        if ($identifier !== $username) {
+            return null;
+        }
+
+        $user = new SingleUser($username);
+        $user->setRememberToken($token);
+
+        return $user;
     }
 
     /**
@@ -52,6 +71,6 @@ class SingleUserProvider implements UserProvider
 
     public function updateRememberToken(Authenticatable $user, $token): void
     {
-        // No-op for single-user
+        Cache::put(self::CACHE_KEY_PREFIX.$user->getAuthIdentifier(), $token, self::CACHE_TTL);
     }
 }

@@ -6,6 +6,8 @@ use Illuminate\Contracts\Auth\Authenticatable;
 
 class SingleUser implements Authenticatable
 {
+    public string $rememberToken = '';
+
     public function __construct(public string $username) {}
 
     public function getAuthIdentifierName(): string
@@ -20,22 +22,22 @@ class SingleUser implements Authenticatable
 
     public function getAuthPassword(): string
     {
-        return '';
+        return (string) config('auth.credentials.password_hash', '');
     }
 
     public function getRememberToken(): ?string
     {
-        return null;
+        return $this->rememberToken ?: null;
     }
 
     public function setRememberToken($value): void
     {
-        // No-op for single-user
+        $this->rememberToken = (string) $value;
     }
 
     public function getRememberTokenName(): ?string
     {
-        return null;
+        return 'remember_token';
     }
 
     public function getAuthPasswordName(): string
