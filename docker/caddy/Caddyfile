@@ -19,7 +19,9 @@
 
     # SSE server — live board updates
     handle /sse {
-        reverse_proxy sse:8080
+        reverse_proxy sse:8080 {
+            flush_interval -1
+        }
     }
 
     # Laravel app — all other requests

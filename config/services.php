@@ -35,4 +35,22 @@ return [
         ],
     ],
 
+    'pushover' => [
+        'token'    => env('PUSHOVER_TOKEN'),
+        'user_key' => env('PUSHOVER_USER_KEY'),
+    ],
+
+    'twilio' => [
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token'  => env('TWILIO_AUTH_TOKEN'),
+        'from'        => env('TWILIO_FROM'),
+        'to'          => env('TWILIO_TO'),
+    ],
+
+    'rocketchat' => [
+        'url'     => env('ROCKETCHAT_URL'),
+        'token'   => env('ROCKETCHAT_TOKEN'),
+        'channel' => env('ROCKETCHAT_CHANNEL', '#general'),
+    ],
+
 ];

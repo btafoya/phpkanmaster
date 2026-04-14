@@ -104,6 +104,7 @@ services:
       SSE_DB_USER: kanban
       SSE_DB_PASSWORD: ${DB_PASSWORD:-kanban_secret}
       SSE_PORT: 8080
+      SSE_HEARTBEAT: 30
     depends_on:
       db:
         condition: service_healthy

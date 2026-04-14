@@ -18,12 +18,15 @@ class SendReminders extends Command
 
     public function handle(): int
     {
+        $sent = 0;
+
         Task::where('reminder_at', '<=', now())
             ->where('reminder_sent', false)
-            ->each(function (Task $task): void {
+            ->each(function (Task $task) use (&$sent): void {
                 try {
                     if (!$task->disable_notifications) {
-                        Notification::route('log', null)->notify(new TaskReminder($task));
+                        $this->sendReminder($task);
+                        $sent++;
                     }
 
                     $this->handleRecurrence($task);
@@ -37,7 +40,31 @@ class SendReminders extends Command
                 }
             });
 
+        if ($sent > 0) {
+            $this->info("Sent {$sent} reminder(s)");
+        }
+
         return Command::SUCCESS;
+    }
+
+    private function sendReminder(Task $task): void
+    {
+        $routes = [];
+
+        if (config('notifications.channels.pushover')) {
+            $routes['pushover'] = config('services.pushover.user_key');
+        }
+
+        if (config('notifications.channels.twilio')) {
+            $routes['twilio'] = config('services.twilio.to');
+        }
+
+        if (config('notifications.channels.rocketchat')) {
+            $routes['rocketchat'] = null;
+        }
+
+        $routeNotification = Notification::routes($routes);
+        $routeNotification->notify(new TaskReminder($task));
     }
 
     private function handleRecurrence(Task $task): void
