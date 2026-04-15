@@ -57,10 +57,8 @@ This builds all images and starts seven services: `app` (PHP-FPM), `db` (Postgre
 The Dockerfile does not bundle vendor dependencies. Run Composer inside the container:
 
 ```bash
-# Main Laravel app and scheduler share the same codebase
 docker compose exec -w /var/www/html app composer update
-
-# SSE server has its own dependencies in /app
+docker compose exec -w /var/www/html scheduler composer update
 docker compose exec -w /app sse composer update
 ```
 
@@ -143,10 +141,8 @@ docker compose up -d --build
 ### Install PHP dependencies
 
 ```bash
-# Main Laravel app (and scheduler — they share the same codebase)
 docker compose exec -w /var/www/html app composer update
-
-# SSE server (has its own composer.json in /app)
+docker compose exec -w /var/www/html scheduler composer update
 docker compose exec -w /app sse composer update
 ```
 
