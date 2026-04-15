@@ -56,7 +56,7 @@ Use these skills when relevant to the task at hand:
 
 | Skill | When to Use | Path |
 |-------|-------------|
-| `jquery` | jQuery DOM manipulation, events, AJAX, animations (project uses jQuery 4.0) | .claude/skills/jquery/ |
+| `jquery` | jQuery DOM manipulation, events, AJAX, animations (project uses jQuery 3.7.1) | .claude/skills/jquery/ |
 | `bootstrap-overview` | Bootstrap 5 setup, components, accessibility | .claude/skills/bootstrap-overview/ |
 | `bootstrap-components` | Bootstrap 5 component details and usage | .claude/skills/bootstrap-components |
 | `bootstrap-layout` | Bootstrap 5 grid and layout system | .claude/skills/bootstrap-layout |
@@ -149,7 +149,7 @@ There is no user database table involved in authentication.
 - `App.Modal.Task` / `App.Modal.Category` — Bootstrap modals for CRUD
 - `App.Alerts` — SweetAlert2 toast and confirm mixins
 
-CDN libraries loaded in `kanban.blade.php`: Bootstrap 5.3, jQuery 4.0, jQuery UI Sortable, Summernote 0.9 (rich text), Flatpickr (date picker), SweetAlert2.
+CDN libraries loaded in `kanban.blade.php`: Bootstrap 5.3, jQuery 3.7.1, jQuery Migrate 3.6.0, jQuery UI Sortable, Summernote 0.9 (rich text), Flatpickr (date picker), SweetAlert2.
 
 ### Database Schema (PostgreSQL)
 

@@ -29,7 +29,7 @@ const CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/jquery-ui-touch-punch@0.2.3/jquery.ui.touch-punch.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://code.jquery.com/jquery-3.7.1.min.js',
-  'https://code.jquery.com/jquery-migrate-4.0.2.min.js',
+  'https://code.jquery.com/jquery-migrate-3.6.0.min.js',
   'https://code.jquery.com/ui/1.13.2/jquery-ui.min.css',
   'https://code.jquery.com/ui/1.13.2/jquery-ui.min.js',
 ];
