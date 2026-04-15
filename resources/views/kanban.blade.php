@@ -98,12 +98,7 @@
                         </svg>
                     </a>
                 </span>
-                <div id="category-filters"
-                    class="d-none d-sm-flex align-items-center justify-content-center gap-1 flex-grow-1 overflow-x-auto">
-                    <button class="btn btn-sm btn-outline-light active flex-shrink-0" data-filter="all">All</button>
-                    <!-- Category pills injected here -->
-                </div>
-                <div class="d-none d-sm-flex align-items-center flex-shrink-0">
+                <div class="d-none d-sm-flex align-items-center flex-grow-1 justify-content-center">
                     <input type="text" id="taskSearch" class="form-control form-control-sm bg-dark text-light border-secondary"
                         placeholder="Search tasks..." style="width: 160px;">
                 </div>
@@ -120,10 +115,6 @@
                 </button>
             </div>
             <div class="collapse navbar-collapse mt-2 d-sm-none" id="navbarActions">
-                <div id="category-filters-mobile" class="d-flex flex-wrap gap-1 mb-2 w-100 justify-content-center">
-                    <button class="btn btn-sm btn-outline-light active" data-filter="all">All</button>
-                    <!-- Category pills injected here -->
-                </div>
                 <div class="d-flex flex-column align-items-stretch gap-2 w-100">
                     <div class="d-flex align-items-center gap-2 mb-1">
                         <span id="sse-status-mobile" class="d-inline-block rounded-circle" style="width:8px;height:8px;background:#6c757d" title="Connecting..."></span>

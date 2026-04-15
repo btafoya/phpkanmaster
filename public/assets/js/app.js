@@ -246,30 +246,7 @@ App.Board = {
     },
 
     async renderFilters() {
-        const categories = await App.Api.getCategories();
-        const $container = $('#category-filters');
-        const $mobileContainer = $('#category-filters-mobile');
-
-        // Keep the 'All' button, remove others
-        $container.find('button:not([data-filter="all"])').remove();
-        $mobileContainer.find('button:not([data-filter="all"])').remove();
-
-        categories.forEach(c => {
-            const btn = `<button class="btn btn-sm btn-outline-light" data-filter="${c.id}" style="border-color: ${c.color}; color: ${c.color}">${sanitizeText(c.name)}</button>`;
-            $container.append(btn);
-            $mobileContainer.append(btn);
-        });
-
-        const filterHandler = (e) => {
-            const $btn = $(e.target).closest('button');
-            $('.btn-outline-light[data-filter]').removeClass('active');
-            $btn.addClass('active');
-            this.currentFilter = $btn.data('filter');
-            this.applyFilter();
-        };
-
-        $container.off('click').on('click', 'button', filterHandler);
-        $mobileContainer.off('click').on('click', 'button', filterHandler);
+        // Swim lanes replace category filter pills — no navbar filter buttons needed
     },
 
     applyFilter() {
