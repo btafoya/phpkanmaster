@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: phpkanmaster_app
     restart: unless-stopped
+    environment:
+      TZ: America/New_York
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
@@ -21,13 +23,14 @@ services:
     image: postgres:17
     container_name: phpkanmaster_db
     restart: unless-stopped
-    ports:
-      - "5436:5432"
     environment:
+      TZ: America/New_York
       POSTGRES_DB: kanban
       POSTGRES_USER: kanban
       POSTGRES_PASSWORD: ${DB_PASSWORD:-kanban_secret}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5436:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/db/init:/docker-entrypoint-initdb.d
@@ -44,6 +47,7 @@ services:
     container_name: phpkanmaster_postgrest
     restart: unless-stopped
     environment:
+      TZ: America/New_York
       PGRST_DB_URI: postgres://kanban_postgrest:${POSTGREST_PASSWORD:-postgrest_secret}@db:5432/kanban
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: anon
@@ -64,6 +68,8 @@ services:
       dockerfile: Dockerfile
     container_name: phpkanmaster_scheduler
     restart: unless-stopped
+    environment:
+      TZ: America/New_York
     working_dir: /var/www/html
     command: php artisan schedule:work
     volumes:
@@ -86,7 +92,8 @@ services:
     volumes:
       - ./backups:/backups
     environment:
-      - PGPASSWORD=${DB_PASSWORD:-kanban_secret}
+      TZ: America/New_York
+      PGPASSWORD: ${DB_PASSWORD:-kanban_secret}
     depends_on:
       db:
         condition: service_healthy
@@ -100,6 +107,7 @@ services:
     container_name: phpkanmaster_sse
     restart: unless-stopped
     environment:
+      TZ: America/New_York
       SSE_DATABASE_URL: 'pgsql:host=db;port=5432;dbname=kanban'
       SSE_DB_USER: kanban
       SSE_DB_PASSWORD: ${DB_PASSWORD:-kanban_secret}
@@ -115,6 +123,8 @@ services:
     image: caddy:latest
     container_name: phpkanmaster_caddy
     restart: unless-stopped
+    environment:
+      TZ: America/New_York
     ports:
       - "8181:80"
       - "8443:443"
