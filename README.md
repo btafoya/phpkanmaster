@@ -58,6 +58,8 @@ The Dockerfile does not bundle vendor dependencies. Run Composer inside the cont
 
 ```bash
 docker compose exec -w /var/www/html app composer update
+docker compose exec -w /var/www/html sse composer update
+docker compose exec -w /var/www/html scheduler composer update
 ```
 
 ### 5. Generate the application key
