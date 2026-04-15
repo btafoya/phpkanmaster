@@ -5,8 +5,5 @@
         "php": ">=8.4",
         "ext-pdo_pgsql": "*",
         "react/http": "^1.11"
-    },
-    "autoload": {
-        "files": ["server.php"]
     }
 }

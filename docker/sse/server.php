@@ -97,7 +97,7 @@ $clients    = [];
 $notifyConn = null;
 
 // Connect and bootstrap
-$connectDb = function() use (&$notifyConn, $loop) {
+$connectDb = function() use (&$notifyConn) {
     try {
         $pdo = connectPg();
         ensureTriggers($pdo);
