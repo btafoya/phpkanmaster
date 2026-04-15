@@ -139,42 +139,31 @@
 
     {{-- Main Board --}}
     <main class="container-fluid">
-        <div id="kanban-board" class="d-flex gap-3 overflow-x-auto py-2">
-            <div class="kanban-column" data-column="new">
-                <div class="column-header d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">New</h5>
+        <div id="kanban-board" class="swimlane-board">
+            <div class="swimlane-header-row">
+                <div class="swimlane-label-header"></div>
+                <div class="workflow-col-header" data-column="new">
+                    <h6 class="mb-0">New</h6>
                     <span class="badge bg-secondary task-count">0</span>
                 </div>
-                <div class="task-list" id="list-new"></div>
-            </div>
-            <div class="kanban-column" data-column="in_progress">
-                <div class="column-header d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">In Progress</h5>
+                <div class="workflow-col-header" data-column="in_progress">
+                    <h6 class="mb-0">In Progress</h6>
                     <span class="badge bg-secondary task-count">0</span>
                 </div>
-                <div class="task-list" id="list-in_progress"></div>
-            </div>
-            <div class="kanban-column" data-column="review">
-                <div class="column-header d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Review</h5>
+                <div class="workflow-col-header" data-column="review">
+                    <h6 class="mb-0">Review</h6>
                     <span class="badge bg-secondary task-count">0</span>
                 </div>
-                <div class="task-list" id="list-review"></div>
-            </div>
-            <div class="kanban-column" data-column="on_hold">
-                <div class="column-header d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">On Hold</h5>
+                <div class="workflow-col-header" data-column="on_hold">
+                    <h6 class="mb-0">On Hold</h6>
                     <span class="badge bg-secondary task-count">0</span>
                 </div>
-                <div class="task-list" id="list-on_hold"></div>
-            </div>
-            <div class="kanban-column" data-column="done">
-                <div class="column-header d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Done</h5>
+                <div class="workflow-col-header" data-column="done">
+                    <h6 class="mb-0">Done</h6>
                     <span class="badge bg-secondary task-count">0</span>
                 </div>
-                <div class="task-list" id="list-done"></div>
             </div>
+            <div id="swimlane-container"></div>
         </div>
     </main>
 

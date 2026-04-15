@@ -179,6 +179,14 @@ function sanitizeRichText(str) {
     });
 }
 
+const COLUMNS = [
+    { id: 'new', name: 'New' },
+    { id: 'in_progress', name: 'In Progress' },
+    { id: 'review', name: 'Review' },
+    { id: 'on_hold', name: 'On Hold' },
+    { id: 'done', name: 'Done' },
+];
+
 App.Board = {
     currentFilter: 'all',
     currentSearch: '',
@@ -216,6 +224,27 @@ App.Board = {
         });
     },
 
+    renderSwimLanes(categories) {
+        const container = $('#swimlane-container').empty();
+        const lanes = [...categories, { id: 'uncategorized', name: 'Uncategorized', color: '#6c757d' }];
+        lanes.forEach(cat => {
+            const lane = $(`
+                <div class="swimlane-row" data-category-id="${cat.id}">
+                    <div class="swimlane-label" style="border-left: 4px solid ${cat.color}">
+                        <span class="swimlane-name">${sanitizeText(cat.name)}</span>
+                        <span class="badge bg-secondary swimlane-count">0</span>
+                    </div>
+                    ${COLUMNS.map(col => `
+                        <div class="task-cell" data-category-id="${cat.id}" data-column="${col.id}">
+                            <div class="task-list" id="list-${cat.id}-${col.id}"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            `);
+            container.append(lane);
+        });
+    },
+
     async renderFilters() {
         const categories = await App.Api.getCategories();
         const $container = $('#category-filters');
@@ -236,11 +265,20 @@ App.Board = {
             $('.btn-outline-light[data-filter]').removeClass('active');
             $btn.addClass('active');
             this.currentFilter = $btn.data('filter');
-            this.render();
+            this.applyFilter();
         };
 
         $container.off('click').on('click', 'button', filterHandler);
         $mobileContainer.off('click').on('click', 'button', filterHandler);
+    },
+
+    applyFilter() {
+        if (this.currentFilter === 'all') {
+            $('.swimlane-row').show();
+        } else {
+            $('.swimlane-row').hide();
+            $(`.swimlane-row[data-category-id="${this.currentFilter}"]`).show();
+        }
     },
 
     async render() {
@@ -249,8 +287,11 @@ App.Board = {
 
         const categoryMap = Object.fromEntries(categories.map(c => [c.id, c]));
 
-        // Clear all lists
-        $('.task-list').empty();
+        // Build swim lane grid from categories
+        this.renderSwimLanes(categories);
+
+        // Apply category filter: show/hide swim lanes
+        this.applyFilter();
 
         const filteredTasks = this.currentFilter === 'all'
             ? tasks
@@ -268,17 +309,20 @@ App.Board = {
         parents.forEach(parent => {
             const children = childrenByParent[parent.id] || [];
             const category = categoryMap[parent.category_id];
+            const catKey = (parent.category_id && category) ? parent.category_id : 'uncategorized';
             const card = this.createParentCard(parent, children, category);
-            $(`#list-${parent.task_column}`).append(card);
+            $(`#list-${catKey}-${parent.task_column}`).append(card);
         });
 
-        // Render child (subtask) cards in their respective columns
+        // Render child (subtask) cards in their respective cells
         const sortedChildren = this.sortTasks(filteredTasks.filter(t => t.parent_id));
         sortedChildren.forEach(child => {
             const parent = tasks.find(t => t.id === child.parent_id);
             const category = parent ? categoryMap[parent.category_id] : null;
+            const catKey = (parent && parent.category_id && categoryMap[parent.category_id])
+                ? parent.category_id : 'uncategorized';
             const card = this.createChildCard(child, parent, category);
-            $(`#list-${child.task_column}`).append(card);
+            $(`#list-${catKey}-${child.task_column}`).append(card);
         });
 
         this.updateCounts();
@@ -430,9 +474,15 @@ App.Board = {
     },
 
     updateCounts() {
-        $('.kanban-column').each(function() {
+        // Per-workflow-column totals (in header row)
+        COLUMNS.forEach(col => {
+            const count = $(`.task-cell[data-column="${col.id}"] .task-card`).length;
+            $(`.workflow-col-header[data-column="${col.id}"] .task-count`).text(count);
+        });
+        // Per-swim-lane totals
+        $('.swimlane-row').each(function() {
             const count = $(this).find('.task-card').length;
-            $(this).find('.task-count').text(count);
+            $(this).find('.swimlane-count').text(count);
         });
     }
 };
@@ -1009,17 +1059,25 @@ App.DnD = {
             tolerance: 'pointer',
             update: async (event, ui) => {
                 const card = ui.item;
-                const newColumn = card.closest('.kanban-column').data('column');
+                const taskCell = card.closest('.task-cell');
+                const newColumn = taskCell.data('column');
+                const newCategoryId = taskCell.data('category-id');
                 const taskId = card.data('id');
 
                 // Get new position based on index
                 const position = card.index();
 
+                const payload = { task_column: newColumn, position };
+
+                // Update category_id when moving across swim lanes
+                if (newCategoryId && newCategoryId !== 'uncategorized') {
+                    payload.category_id = newCategoryId;
+                } else {
+                    payload.category_id = null;
+                }
+
                 try {
-                    await App.Api.updateTask(taskId, {
-                        task_column: newColumn,
-                        position: position
-                    });
+                    await App.Api.updateTask(taskId, payload);
                     App.Board.updateCounts();
                 } catch (e) {
                     App.Alerts.Toast.fire({ icon: 'error', title: 'Failed to update task position' });
@@ -1124,10 +1182,12 @@ App.SSE = {
         // Save scroll position
         const $board = $('#kanban-board');
         const scrollLeft = $board.scrollLeft();
+        const scrollTop = $board.scrollTop();
 
         App.Board.render().then(() => {
             // Restore scroll position after re-render
             $board.scrollLeft(scrollLeft);
+            $board.scrollTop(scrollTop);
             App.DnD.init();
         });
     },
