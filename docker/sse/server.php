@@ -27,60 +27,64 @@ $channels = [
 
 // ── Trigger bootstrap ────────────────────────────────────────────────────────
 
-function ensureTriggers(PDO $pdo): void
-{
-    $triggers = [
-        ['table' => 'tasks',       'channel' => 'task_changes'],
-        ['table' => 'categories',  'channel' => 'category_changes'],
-        ['table' => 'task_files',  'channel' => 'file_changes'],
-        ['table' => 'task_notes',  'channel' => 'note_changes'],
-    ];
+if (!\function_exists('ensureTriggers')) {
+    function ensureTriggers(PDO $pdo): void
+    {
+        $triggers = [
+            ['table' => 'tasks',       'channel' => 'task_changes'],
+            ['table' => 'categories',  'channel' => 'category_changes'],
+            ['table' => 'task_files',  'channel' => 'file_changes'],
+            ['table' => 'task_notes',  'channel' => 'note_changes'],
+        ];
 
-    foreach ($triggers as $t) {
-        $table   = $t['table'];
-        $channel = $t['channel'];
-        $fn      = "notify_{$channel}";
-        $trg     = "trg_{$channel}";
+        foreach ($triggers as $t) {
+            $table   = $t['table'];
+            $channel = $t['channel'];
+            $fn      = "notify_{$channel}";
+            $trg     = "trg_{$channel}";
 
-        $pdo->exec(<<<SQL
-            CREATE OR REPLACE FUNCTION {$fn}() RETURNS trigger AS \$\$
-            BEGIN
-                PERFORM pg_notify(
-                    '{$channel}',
-                    json_build_object(
-                        'op', TG_OP,
-                        'table', TG_TABLE_NAME
-                    )::text
-                );
-                RETURN NEW;
-            END;
-            \$\$ LANGUAGE plpgsql
-        SQL);
+            $pdo->exec(<<<SQL
+                CREATE OR REPLACE FUNCTION {$fn}() RETURNS trigger AS \$\$
+                BEGIN
+                    PERFORM pg_notify(
+                        '{$channel}',
+                        json_build_object(
+                            'op', TG_OP,
+                            'table', TG_TABLE_NAME
+                        )::text
+                    );
+                    RETURN NEW;
+                END;
+                \$\$ LANGUAGE plpgsql
+            SQL);
 
-        $exists = $pdo->query(
-            "SELECT 1 FROM information_schema.triggers WHERE event_object_table = '{$table}' AND trigger_name = '{$trg}'"
-        )->fetch();
+            $exists = $pdo->query(
+                "SELECT 1 FROM information_schema.triggers WHERE event_object_table = '{$table}' AND trigger_name = '{$trg}'"
+            )->fetch();
 
-        if (!$exists) {
-            $pdo->exec("CREATE TRIGGER {$trg} AFTER INSERT OR UPDATE OR DELETE ON {$table} FOR EACH ROW EXECUTE FUNCTION {$fn}()");
+            if (!$exists) {
+                $pdo->exec("CREATE TRIGGER {$trg} AFTER INSERT OR UPDATE OR DELETE ON {$table} FOR EACH ROW EXECUTE FUNCTION {$fn}()");
+            }
         }
     }
 }
 
 // ── PostgreSQL connection with LISTEN ────────────────────────────────────────
 
-function connectPg(): PDO
-{
-    global $pgDsn, $pgUser, $pgPassword;
-    $pdo = new PDO($pgDsn, $pgUser, $pgPassword, [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-    $pdo->exec('LISTEN task_changes');
-    $pdo->exec('LISTEN category_changes');
-    $pdo->exec('LISTEN file_changes');
-    $pdo->exec('LISTEN note_changes');
-    return $pdo;
+if (!\function_exists('connectPg')) {
+    function connectPg(): PDO
+    {
+        global $pgDsn, $pgUser, $pgPassword;
+        $pdo = new PDO($pgDsn, $pgUser, $pgPassword, [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+        $pdo->exec('LISTEN task_changes');
+        $pdo->exec('LISTEN category_changes');
+        $pdo->exec('LISTEN file_changes');
+        $pdo->exec('LISTEN note_changes');
+        return $pdo;
+    }
 }
 
 // ── HTTP server ──────────────────────────────────────────────────────────────
